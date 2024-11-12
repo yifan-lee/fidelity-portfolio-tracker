@@ -11,8 +11,8 @@ def load_transaction(data_folder_path, transaction_file_pattern):
 
     transactions = pd.concat(transaction_list, ignore_index=True)
     
-    transactions['Run Date'] = pd.to_datetime(transactions['Run Date'], format=' %m/%d/%Y')
-    transactions['Settlement Date'] = pd.to_datetime(transactions['Settlement Date'], format='%m/%d/%Y')
+    transactions['Run Date'] = pd.to_datetime(transactions['Run Date'], format=' %m/%d/%Y').dt.date
+    transactions['Settlement Date'] = pd.to_datetime(transactions['Settlement Date'], format='%m/%d/%Y').dt.date
     transactions['Symbol'] = transactions['Symbol'].str.replace(' ', '', regex=True)
     transactions['Symbol'] = transactions['Symbol'].replace('', 'Transfer')
     
