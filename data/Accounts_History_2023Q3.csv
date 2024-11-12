@@ -1,0 +1,32 @@
+﻿
+
+Run Date,Account,Action,Symbol,Description,Type,Quantity,Price ($),Commission ($),Fees ($),Accrued Interest ($),Amount ($),Settlement Date
+ 09/29/2023,"Individual" Z23390746," REINVESTMENT FIDELITY TREASURY MONEY MARKET FUND (FZFXX) (Cash)", FZFXX," FIDELITY TREASURY MONEY MARKET FUND",Cash,50.75,1,,,,-50.75,
+ 09/29/2023,"Cash Management (Individual)" Z06872898," INTEREST EARNED FDIC INSURED DEPOSIT AT US BANK NOT ... (QUSBQ) (Cash)", QUSBQ," FDIC INSURED DEPOSIT AT US BANK NOT COV",Cash,0.000,,,,,0.23,
+ 09/29/2023,"Individual" Z23390746," DIVIDEND RECEIVED FIDELITY TREASURY MONEY MARKET FUND (FZFXX) (Cash)", FZFXX," FIDELITY TREASURY MONEY MARKET FUND",Cash,0.000,,,,,50.75,
+ 09/26/2023,"Individual" Z23390746," YOU BOUGHT NIKE INC CLASS B COM NPV (NKE) (Cash)", NKE," NIKE INC CLASS B COM NPV",Cash,10,90,,,,-900,09/28/2023
+ 09/19/2023,"Individual" Z23390746," YOU BOUGHT NIKE INC CLASS B COM NPV (NKE) (Cash)", NKE," NIKE INC CLASS B COM NPV",Cash,10,95,,,,-950,09/21/2023
+ 08/31/2023,"Individual" Z23390746," REINVESTMENT FIDELITY TREASURY MONEY MARKET FUND (FZFXX) (Cash)", FZFXX," FIDELITY TREASURY MONEY MARKET FUND",Cash,53.84,1,,,,-53.84,
+ 08/31/2023,"Cash Management (Individual)" Z06872898," INTEREST EARNED FDIC INSURED DEPOSIT AT US BANK NOT ... (QUSBQ) (Cash)", QUSBQ," FDIC INSURED DEPOSIT AT US BANK NOT COV",Cash,0.000,,,,,0.23,
+ 08/31/2023,"Individual" Z23390746," DIVIDEND RECEIVED FIDELITY TREASURY MONEY MARKET FUND (FZFXX) (Cash)", FZFXX," FIDELITY TREASURY MONEY MARKET FUND",Cash,0.000,,,,,53.84,
+ 08/25/2023,"Individual" Z23390746," DIVIDEND RECEIVED STARBUCKS CORP COM USD0.001 (SBUX) (Cash)", SBUX," STARBUCKS CORP COM USD0.001",Cash,0.000,,,,,10.6,
+ 08/17/2023,"Individual" Z23390746," DIVIDEND RECEIVED APPLE INC (AAPL) (Cash)", AAPL," APPLE INC",Cash,0.000,,,,,16.8,
+ 08/10/2023,"Individual" Z23390746," DIVIDEND RECEIVED AMERICAN EXPRESS CO COM USD0.20 (AXP) (Cash)", AXP," AMERICAN EXPRESS CO COM USD0.20",Cash,0.000,,,,,6,
+ 07/31/2023,"Individual" Z23390746," DIVIDEND RECEIVED JPMORGAN CHASE &CO. COM (JPM) (Cash)", JPM," JPMORGAN CHASE &CO. COM",Cash,0.000,,,,,10,
+ 07/31/2023,"Individual" Z23390746," REINVESTMENT FIDELITY TREASURY MONEY MARKET FUND (FZFXX) (Cash)", FZFXX," FIDELITY TREASURY MONEY MARKET FUND",Cash,51.46,1,,,,-51.46,
+ 07/31/2023,"Cash Management (Individual)" Z06872898," INTEREST EARNED FDIC INSURED DEPOSIT AT US BANK NOT ... (QUSBQ) (Cash)", QUSBQ," FDIC INSURED DEPOSIT AT US BANK NOT COV",Cash,0.000,,,,,0.22,
+ 07/31/2023,"Individual" Z23390746," DIVIDEND RECEIVED FIDELITY TREASURY MONEY MARKET FUND (FZFXX) (Cash)", FZFXX," FIDELITY TREASURY MONEY MARKET FUND",Cash,0.000,,,,,51.46,
+
+
+
+"The data and information in this spreadsheet is provided to you solely for your use and is not for distribution. The spreadsheet is provided for"
+"informational purposes only, and is not intended to provide advice, nor should it be construed as an offer to sell, a solicitation of an offer to buy or a"
+"recommendation for any security or insurance product by Fidelity or any third party. Data and information shown is based on information known to Fidelity as of the date it was"
+"exported and is subject to change. It should not be used in place of your account statements or trade confirmations and is not intended for tax reporting"
+"purposes. For more information on the data included in this spreadsheet, including any limitations thereof, go to Fidelity.com."
+
+"Brokerage services are provided by Fidelity Brokerage Services LLC (FBS), 900 Salem Street, Smithfield, RI 02917. Custody and other services provided by National"
+"Financial Services LLC (NFS). Both are Fidelity Investment companies and members SIPC, NYSE. Insurance products at Fidelity are distributed by"
+"Fidelity Insurance Agency, Inc., and, for certain products, by Fidelity Brokerage Services, Member NYSE, SIPC."
+
+Date downloaded 11/12/2024 9:46 pm
