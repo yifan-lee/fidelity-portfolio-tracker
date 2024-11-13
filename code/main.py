@@ -16,6 +16,8 @@ position = data_loader.load_position(data_folder_path, position_file_pattern)
 
 current_portfolio = Portfolio(transactions=transactions, position=position)
 
-print(current_portfolio.get_investment_distribution())
+current_portfolio.show_investment_distribution()
 
-print(current_portfolio.get_overall_irr())
+current_portfolio.show_stock_irr()
+
+## todo: get the irr of all stock
