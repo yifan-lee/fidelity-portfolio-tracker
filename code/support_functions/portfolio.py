@@ -1,5 +1,7 @@
 from datetime import datetime
 import pandas as pd
+import numpy as np
+from scipy.optimize import root_scalar
 
 class Portfolio:
     def __init__(self, transactions, position):
@@ -42,4 +44,30 @@ class Portfolio:
         return self.get_total_investment()-self.get_stock_investment()-self.get_bill_investment()
         
     
+    def get_overall_irr(self):
+        total_current_value = self.get_total_current_value()
         
+        Transfer_transaction = self.individual_transactions[self.individual_transactions['Symbol']=='Transfer']
+        new_rows = pd.DataFrame({
+            "Run Date": self.today,
+            "Symbol": ['Transfer'],
+            "Amount ($)": -total_current_value
+        })
+        Transfer_transaction = pd.concat([Transfer_transaction, new_rows], ignore_index=True)
+        
+        return self.calculate_irr(Transfer_transaction)
+    
+    def get_total_current_value(self):
+        return self.individual_position['Current Value'].sum()
+    
+    def calculate_irr(self, transactions, lower_bound=-0.999, upper_bound=5):
+        transactions_copy = transactions.copy()
+        transactions_copy['time_diffs_in_year'] = (self.today - transactions_copy['Run Date']).apply(lambda x: x.days)/365.25
+        def npv(rate):
+            return np.sum(transactions_copy['Amount ($)'] * (1 + rate) ** transactions_copy['time_diffs_in_year'])
+        result = root_scalar(npv, bracket=[lower_bound, upper_bound], method='bisect')
+        
+        if result.converged:
+            return result.root
+        else:
+            raise ValueError("No solution found for the rate that satisfies the equation.")
