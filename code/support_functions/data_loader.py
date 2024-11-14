@@ -37,7 +37,9 @@ def find_latest_position_file(position_files):
 
 def clean_position(position):
     position_copy = position.copy()
-    position_copy = position_copy[position_copy["Current Value"].notna()]
+    position_copy = position_copy[
+        position_copy["Current Value"].notna()
+    ]  # remove rows without current value
     position_copy["Current Value"] = transfer_dollar_to_float(
         position_copy["Current Value"]
     )
@@ -54,9 +56,7 @@ def load_transaction(data_folder_path, transaction_file_pattern):
     transaction_files = glob.glob(transaction_file_path_pattern)
 
     transactions = combine_transaction_files(transaction_files)
-
     transactions = clean_transactions(transactions)
-
     return transactions
 
 
@@ -70,7 +70,9 @@ def combine_transaction_files(transaction_files):
 
 def clean_transactions(transactions):
     transactions_copy = transactions.copy()
-    transactions_copy = transactions_copy[transactions_copy["Amount ($)"].notna()]
+    transactions_copy = transactions_copy[
+        transactions_copy["Amount ($)"].notna()
+    ]  # remove rows without  value
     transactions_copy["Run Date"] = pd.to_datetime(
         transactions_copy["Run Date"], format=" %m/%d/%Y"
     ).dt.date
@@ -78,7 +80,9 @@ def clean_transactions(transactions):
         transactions_copy["Settlement Date"], format="%m/%d/%Y"
     ).dt.date
     transactions_copy.loc[transactions_copy["Symbol"] == "  ", "Symbol"] = "Transfer"
-    transactions_copy["Symbol"] = transactions_copy["Symbol"].str.lstrip()
+    transactions_copy["Symbol"] = transactions_copy[
+        "Symbol"
+    ].str.lstrip()  # remove space at the beginning of Symbol
     transactions_copy = transactions_copy.sort_values(by="Run Date").reset_index(
         drop=True
     )
@@ -86,4 +90,7 @@ def clean_transactions(transactions):
 
 
 def transfer_dollar_to_float(dat):
+    """
+    Change "$123,456" to 123455
+    """
     return dat.str.replace("$", "", regex=False).astype(float)
