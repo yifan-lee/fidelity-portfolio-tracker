@@ -8,6 +8,7 @@
   - [portfolio.py](#portfoliopy)
   - [data\_loader.py](#data_loaderpy)
 - [Data](#data)
+- [To-do](#to-do)
 
 ## About
 
@@ -47,5 +48,9 @@ current_portfolio.show_stock_irr()
 ## Data
 
 Transaction and position files downloaded from Fidelity.
+
+## To-do
+
+Analyze irr of other fidelity accounts.
 
 
