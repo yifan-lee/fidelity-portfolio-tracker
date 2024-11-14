@@ -1,8 +1,8 @@
-import pandas as pd
-import numpy as np
-import os
-import importlib
-from datetime import datetime
+# import pandas as pd
+# import numpy as np
+# import os
+# import importlib
+# from datetime import datetime
 
 from support_functions import Portfolio, data_loader
 
@@ -19,5 +19,3 @@ current_portfolio = Portfolio(transactions=transactions, position=position)
 current_portfolio.show_investment_distribution()
 
 current_portfolio.show_stock_irr()
-
-## todo: get the irr of all stock

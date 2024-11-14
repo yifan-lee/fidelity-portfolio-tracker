@@ -10,10 +10,16 @@ class Portfolio:
 
     Attributes
     ----------
-    transactions : pd.DataFrame
+    transactions: pd.DataFrame
         All historial transactions.
-    position : pd.DataFrame
+    position: pd.DataFrame
         Current balance in the account.
+    today: datetime.date
+        Today's date
+    individual_transactions: pd.DataFrame
+        Transactions under account "Individual Z23390746"
+    individual_position: pd.DataFrame
+        Position under account "Individual Z23390746"
 
     Methods
     -------
@@ -23,6 +29,12 @@ class Portfolio:
         get the distribution of investment amony differnet asset.
     get_total_investment:
         get total investment amount in dollar.
+    get_stock_investment:
+        get amount of stock investment in dollar.
+    get_bill_investment:
+        get amount of bill investment in dollar.
+    get_other_investment:
+        get amount of other investment in dollar.
     """
     def __init__(self, transactions, position):
         self.transactions = transactions
@@ -75,13 +87,13 @@ class Portfolio:
     def get_stock_investment(self):
         stock_position = self.individual_position[
             ~(self.individual_position["Description"] == "HELD IN MONEY MARKET")
-            & ~(self.individual_position["Description"].str.contains("BILLS"))
+            & ~(self.individual_position["Description"].str.contains("BILLS", na=False))
         ]
         return stock_position["Cost Basis Total"].sum()
 
     def get_bill_investment(self):
         bill_position = self.individual_position[
-            (self.individual_position["Description"].str.contains("BILLS"))
+            (self.individual_position["Description"].str.contains("BILLS", na=False))
         ]
         return bill_position["Cost Basis Total"].sum()
 
@@ -111,7 +123,7 @@ class Portfolio:
         stock_list = [
             element
             for element in unique_symbols
-            if "FZFXX" not in element and not element[0].isdigit()
+            if "FZFXX" not in element and not element[0].isdigit() and 'Pending' not in element
         ]
         result_dict = {x: self.calculate_irr([x]) for x in stock_list}
         if "Transfer" in stock_list:

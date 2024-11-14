@@ -1,32 +1,49 @@
 import pandas as pd
 import os
 import glob
+from datetime import datetime
 
 
 def load_position(data_folder_path, position_file_pattern):
+    
+    position = None
     position_file_path_pattern = os.path.join(data_folder_path, position_file_pattern)
-    position_file = glob.glob(position_file_path_pattern)
+    position_files = glob.glob(position_file_path_pattern)
+    position_file = find_latest_position_file(position_files)
 
-    if len(position_file) == 1:
-        position = pd.read_csv(position_file[0])
-        position = position[position["Type"].notna()]
-        position["Current Value"] = transfer_dollar_to_float(position["Current Value"])
-        position["Cost Basis Total"] = transfer_dollar_to_float(
-            position["Cost Basis Total"]
-        )
-    elif len(position_file) == 0:
-        print(
-            "No file starting with 'Portfolio_Positions' found in the specified folder."
-        )
-        return 0
+    if not position_file is None:
+        position = pd.read_csv(position_file)
+        position = clean_position(position)
     else:
         print(
-            "More than one file starting with 'Portfolio_Positions' found in the specified folder."
+            "No position file found."
         )
-        return 0
-
     return position
 
+
+def find_latest_position_file(position_files):
+    latest_file = None
+    latest_date = None
+    
+    for file_path in position_files:
+        file_name = os.path.basename(file_path)
+        date_str = file_name.split("_")[-1].replace(".csv", "")
+        file_date = datetime.strptime(date_str, "%b-%d-%Y")
+
+        if latest_date is None or file_date > latest_date:
+            latest_date = file_date
+            latest_file = file_path
+    
+    return latest_file
+
+def clean_position(position):
+    position_copy = position.copy()
+    position_copy = position_copy[position_copy["Current Value"].notna()]
+    position_copy["Current Value"] = transfer_dollar_to_float(position_copy["Current Value"])
+    position_copy["Cost Basis Total"] = transfer_dollar_to_float(
+        position_copy["Cost Basis Total"]
+    )
+    return position_copy
 
 def load_transaction(data_folder_path, transaction_file_pattern):
     transaction_file_path_pattern = os.path.join(
@@ -34,27 +51,36 @@ def load_transaction(data_folder_path, transaction_file_pattern):
     )
     transaction_files = glob.glob(transaction_file_path_pattern)
 
-    transaction_list = [
-        pd.read_csv(file, usecols=range(13)) for file in transaction_files
-    ]
-    transaction_list = [
-        transaction[transaction["Account"].notna()] for transaction in transaction_list
-    ]
-
-    transactions = pd.concat(transaction_list, ignore_index=True)
-
-    transactions["Run Date"] = pd.to_datetime(
-        transactions["Run Date"], format=" %m/%d/%Y"
-    ).dt.date
-    transactions["Settlement Date"] = pd.to_datetime(
-        transactions["Settlement Date"], format="%m/%d/%Y"
-    ).dt.date
-    transactions["Symbol"] = transactions["Symbol"].str.replace(" ", "", regex=True)
-    transactions["Symbol"] = transactions["Symbol"].replace("", "Transfer")
-    transactions = transactions.sort_values(by="Run Date").reset_index(drop=True)
+    transactions = combine_transaction_files(transaction_files)
+    
+    transactions = clean_transactions(transactions)
+    
 
     return transactions
 
+def combine_transaction_files(transaction_files):
+    transaction_list = [
+        pd.read_csv(file, usecols=range(13)) for file in transaction_files
+    ]
+    transactions = pd.concat(transaction_list, ignore_index=True)
+    return transactions
+
+
+def clean_transactions(transactions):
+    transactions_copy = transactions.copy()
+    transactions_copy = transactions_copy[transactions_copy["Amount ($)"].notna()]
+    transactions_copy["Run Date"] = pd.to_datetime(
+        transactions_copy["Run Date"], format=" %m/%d/%Y"
+    ).dt.date
+    transactions_copy["Settlement Date"] = pd.to_datetime(
+        transactions_copy["Settlement Date"], format="%m/%d/%Y"
+    ).dt.date
+    # transactions_copy["Symbol"] = transactions_copy["Symbol"].str.replace(" ", "", regex=True)
+    transactions_copy.loc[transactions_copy["Symbol"] == "  ", "Symbol"] = "Transfer"
+    transactions_copy["Symbol"] = transactions_copy["Symbol"].str.lstrip()
+    # transactions_copy["Symbol"] = transactions_copy["Symbol"].replace("", "Transfer")
+    transactions_copy = transactions_copy.sort_values(by="Run Date").reset_index(drop=True)
+    return transactions_copy
 
 def transfer_dollar_to_float(dat):
     return dat.str.replace("$", "", regex=False).astype(float)
