@@ -2,12 +2,11 @@
 
 <!-- ![Project Logo](https://example.com/logo.png) -->
 
-## Table of Contents
-
-
 - [About](#about)
 - [Usage](#usage)
 - [Code](#code)
+  - [portfolio.py](#portfoliopy)
+  - [data\_loader.py](#data_loaderpy)
 - [Data](#data)
 
 ## About
