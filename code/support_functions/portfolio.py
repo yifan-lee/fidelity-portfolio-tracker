@@ -36,6 +36,7 @@ class Portfolio:
     get_other_investment:
         get amount of other investment in dollar.
     """
+
     def __init__(self, transactions, position):
         self.transactions = transactions
         self.position = position
@@ -123,7 +124,9 @@ class Portfolio:
         stock_list = [
             element
             for element in unique_symbols
-            if "FZFXX" not in element and not element[0].isdigit() and 'Pending' not in element
+            if "FZFXX" not in element
+            and not element[0].isdigit()
+            and "Pending" not in element
         ]
         result_dict = {x: self.calculate_irr([x]) for x in stock_list}
         if "Transfer" in stock_list:
