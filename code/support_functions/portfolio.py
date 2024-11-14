@@ -35,6 +35,22 @@ class Portfolio:
         get amount of bill investment in dollar.
     get_other_investment:
         get amount of other investment in dollar.
+    show_stock_irr:
+        display the result of get_stock_irr.
+    get_stock_irr:
+        get the irr of each stock.
+    add_total_current_value_to_individual_position:
+        ---
+    get_total_current_value:
+        ---
+    set_merged_individual_position_transaction:
+        merge individual_position and individual_transaction.
+    add_time_diff_in_merged_individual_position_transaction:
+        ---
+    calculate_irr(symbol_list, lower_bound=-0.999, upper_bound=5):
+        filter all transactions with symbol in symbol_list. Then calculate the irr of these transactions.
+    filter_merged_transactions_by_symbol(symbol_list):
+        filter all transactions with symbol in symbol_list.
     """
 
     def __init__(self, transactions, position):
