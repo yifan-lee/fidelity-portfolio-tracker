@@ -7,6 +7,8 @@
 
 - [About](#about)
 - [Usage](#usage)
+- [Code](#code)
+- [Data](#data)
 
 ## About
 
@@ -17,11 +19,32 @@
 Run the following code.
 
 ```bash
-# This is a Python comment
 python ./code/main.py
 ```
 
-It will display the distribution of investments in individual account and irr of each stock bought.
+It will display the distribution of investments and irr of each stock bought in individual account.
 
+## Code
+
+### portfolio.py
+
+Provide Portfolio class with historical transactions and current position as inputs.
+
+Currently, its main attributes are:
+```python
+# display the distribution of investments in individual account
+portfolio.show_investment_distribution()
+# display the irr of each stock bought in individual account
+current_portfolio.show_stock_irr()
+```
+
+### data_loader.py
+
+- load_position: load the latest downloaded position .
+- load_transaction: load all downloaded transactions.
+
+## Data
+
+Transaction and position files downloaded from Fidelity.
 
 
