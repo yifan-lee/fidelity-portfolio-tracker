@@ -53,46 +53,48 @@ class Portfolio:
         filter all transactions with symbol in symbol_list.
     """
 
-    def __init__(self, transactions, position):
+    def __init__(self, transactions, position, account_number_dict):
         self.transactions = transactions
         self.position = position
+        self.account_number_dict = account_number_dict
 
         self.today = datetime.now().date()
-        self.individual_transactions = self.transactions[
-            self.transactions["Account"] == "Individual Z23390746"
-        ]
-        self.pension_transactions = self.transactions[
-            self.transactions["Account"] == "ERNST & YOUNG 401(K) 86964"
-        ]
-        self.HSA_transactions = self.transactions[
-            self.transactions["Account"] == "Health Savings Account 241802439"
-        ]
-        self.cash_transactions = self.transactions[
-            self.transactions["Account"] == "Cash Management (Individual) Z06872898"
-        ]
+        self.account_transactions_dict = {
+            x: self.transactions[self.transactions["Account"].str.contains(account_number_dict[x])] for x in self.account_number_dict
+        }
+        self.account_positions_dict = {
+            x: self.position[self.position["Account Number"].str.contains(account_number_dict[x])] for x in self.account_number_dict
+        }
         
-        self.individual_position = self.position[
-            self.position["Account Number"] == "Z23390746"
-        ]
-        self.pension_position = self.position[
-            self.position["Account Number"] == "86964"
-        ]
-        self.HSA_position = self.position[
-            self.position["Account Number"] == "241802439"
-        ]
-        self.cash_position = self.position[
-            self.position["Account Number"] == "Z06872898"
-        ]
         
+    def set_current_account(self,account_symbol):
+        self.current_transactions = self.account_transactions_dict[account_symbol]
+        self.current_position = self.account_positions_dict[account_symbol]
 
-    def show_investment_distribution(self):
-        investment_distribution = self.get_investment_distribution()
+    
+    def show_investment_distribution(self, account_symbol):
+        investment_distribution = self.get_investment_distribution(account_symbol)
         investment_distribution["Percent"] = [
             f"{x * 100:.2f}%" for x in investment_distribution["Percent"]
         ]
         print(pd.DataFrame(investment_distribution))
 
-    def get_investment_distribution(self):
+    def get_investment_distribution(self, account_symbol):
+        if account_symbol == 'individual':
+            result = self.get_individual_investment_distribution()
+        elif account_symbol == 'pension':
+            result = self.get_pension_investment_distribution()
+        elif account_symbol == 'HSA':
+            pass
+        elif account_symbol == 'Z06872898':
+            pass
+        else:
+            pass
+        return result
+
+    
+    
+    def get_individual_investment_distribution(self):
         total_investment = self.get_total_investment()
         stock_investment = self.get_stock_investment()
         bill_investment = self.get_bill_investment()
@@ -116,21 +118,21 @@ class Portfolio:
         return result
 
     def get_total_investment(self):
-        total_investment = self.individual_transactions[
-            self.individual_transactions["Symbol"] == "Transfer"
+        total_investment = self.current_transactions[
+            self.current_transactions["Symbol"] == "Transfer"
         ]["Amount ($)"].sum()
         return total_investment
 
     def get_stock_investment(self):
-        stock_position = self.individual_position[
-            ~(self.individual_position["Description"] == "HELD IN MONEY MARKET")
-            & ~(self.individual_position["Description"].str.contains("BILLS", na=False))
+        stock_position = self.current_position[
+            ~(self.current_position["Description"] == "HELD IN MONEY MARKET")
+            & ~(self.current_position["Description"].str.contains("BILLS", na=False))
         ]
         return stock_position["Cost Basis Total"].sum()
 
     def get_bill_investment(self):
-        bill_position = self.individual_position[
-            (self.individual_position["Description"].str.contains("BILLS", na=False))
+        bill_position = self.current_position[
+            (self.current_position["Description"].str.contains("BILLS", na=False))
         ]
         return bill_position["Cost Basis Total"].sum()
 
@@ -140,9 +142,19 @@ class Portfolio:
             - self.get_stock_investment()
             - self.get_bill_investment()
         )
+        
+    
+    def get_pension_investment_distribution(self):
+        result = {
+            "Class": self.current_position['Description'],
+            "Amount": self.current_position['Current Value'],
+            "Percent": self.current_position['Current Value']/self.current_position['Current Value'].sum(),
+        }
+        return result
+    
 
-    def show_stock_irr(self):
-        stock_irr = self.get_stock_irr()
+    def show_account_irr(self, account_symbol):
+        stock_irr = self.get_account_irr(account_symbol)
         stock_irr_nice_look = pd.DataFrame(
             {
                 "Stock": stock_irr.keys(),
@@ -151,7 +163,13 @@ class Portfolio:
         )
         print(pd.DataFrame(stock_irr_nice_look))
 
-    def get_stock_irr(self):
+    def get_account_irr(self,account_symbol):
+        if account_symbol == 'individual':
+            result_dict = self.get_individual_irr()
+            
+        return result_dict
+            
+    def get_individual_irr(self):
         self.add_total_current_value_to_individual_position()
         self.set_merged_individual_position_transaction()
         self.merged_individual_position_transaction = self.add_time_diff(self.merged_individual_position_transaction)
@@ -173,7 +191,7 @@ class Portfolio:
         return result_dict
 
     def add_total_current_value_to_individual_position(self):
-        if "Transfer" in self.individual_position["Symbol"].values:
+        if "Transfer" in self.current_position["Symbol"].values:
             print("Total current value has been added")
             return
 
@@ -181,24 +199,24 @@ class Portfolio:
         new_rows = pd.DataFrame(
             {"Symbol": ["Transfer"], "Current Value": -total_current_value}
         )
-        self.individual_position = pd.concat(
-            [self.individual_position, new_rows], ignore_index=True
+        self.current_position = pd.concat(
+            [self.current_position, new_rows], ignore_index=True
         )
 
     def get_total_current_value(self):
-        return self.individual_position["Current Value"].sum()
+        return self.current_position["Current Value"].sum()
 
     def set_merged_individual_position_transaction(self):
         new_rows = pd.DataFrame(
             {
-                "Run Date": [self.today] * len(self.individual_position),
-                "Symbol": self.individual_position["Symbol"],
-                "Amount ($)": self.individual_position["Current Value"],
+                "Run Date": [self.today] * len(self.current_position),
+                "Symbol": self.current_position["Symbol"],
+                "Amount ($)": self.current_position["Current Value"],
             }
         )
 
         self.merged_individual_position_transaction = pd.concat(
-            [self.individual_transactions, new_rows], ignore_index=True
+            [self.current_transactions, new_rows], ignore_index=True
         )
 
     def add_time_diff(self, transactions):
