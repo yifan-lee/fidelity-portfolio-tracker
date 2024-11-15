@@ -45,7 +45,7 @@ class Portfolio:
         ---
     set_merged_individual_position_transaction:
         merge individual_position and individual_transaction.
-    add_time_diff_in_merged_individual_position_transaction:
+    add_time_diff:
         ---
     calculate_irr(symbol_list, lower_bound=-0.999, upper_bound=5):
         filter all transactions with symbol in symbol_list. Then calculate the irr of these transactions.
@@ -154,7 +154,7 @@ class Portfolio:
     def get_stock_irr(self):
         self.add_total_current_value_to_individual_position()
         self.set_merged_individual_position_transaction()
-        self.add_time_diff_in_merged_individual_position_transaction()
+        self.merged_individual_position_transaction = self.add_time_diff(self.merged_individual_position_transaction)
 
         unique_symbols = self.merged_individual_position_transaction["Symbol"].unique()
         stock_list = [
@@ -201,10 +201,16 @@ class Portfolio:
             [self.individual_transactions, new_rows], ignore_index=True
         )
 
-    def add_time_diff_in_merged_individual_position_transaction(self):
-        self.merged_individual_position_transaction.loc[:, "time_diffs_in_year"] = (
-            self.today - self.merged_individual_position_transaction.loc[:, "Run Date"]
-        ).apply(lambda x: x.days) / 365.25
+    def add_time_diff(self, transactions):
+        transactions_copy = transactions.copy()
+        if not 'time_diffs_in_year' in transactions_copy.columns:
+            transactions_copy.loc[:, "time_diffs_in_year"] = (
+                self.today - transactions_copy.loc[:, "Run Date"]
+            ).apply(lambda x: x.days) / 365.25
+        else:
+            print("Column time_diffs_in_year exists")
+        return transactions_copy
+        
 
     def calculate_irr(self, transactions, lower_bound=-0.999, upper_bound=5):
 
@@ -227,3 +233,5 @@ class Portfolio:
         return self.merged_individual_position_transaction[
             self.merged_individual_position_transaction["Symbol"].isin(symbol_list)
         ]
+        
+    
