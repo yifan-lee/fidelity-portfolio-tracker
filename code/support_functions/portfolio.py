@@ -61,9 +61,29 @@ class Portfolio:
         self.individual_transactions = self.transactions[
             self.transactions["Account"] == "Individual Z23390746"
         ]
+        self.pension_transactions = self.transactions[
+            self.transactions["Account"] == "ERNST & YOUNG 401(K) 86964"
+        ]
+        self.HSA_transactions = self.transactions[
+            self.transactions["Account"] == "Health Savings Account 241802439"
+        ]
+        self.cash_transactions = self.transactions[
+            self.transactions["Account"] == "Cash Management (Individual) Z06872898"
+        ]
+        
         self.individual_position = self.position[
             self.position["Account Number"] == "Z23390746"
         ]
+        self.pension_position = self.position[
+            self.position["Account Number"] == "86964"
+        ]
+        self.HSA_position = self.position[
+            self.position["Account Number"] == "241802439"
+        ]
+        self.cash_position = self.position[
+            self.position["Account Number"] == "Z06872898"
+        ]
+        
 
     def show_investment_distribution(self):
         investment_distribution = self.get_investment_distribution()
@@ -144,10 +164,11 @@ class Portfolio:
             and not element[0].isdigit()
             and "Pending" not in element
         ]
-        result_dict = {x: self.calculate_irr([x]) for x in stock_list}
+        result_dict = {x: self.calculate_irr(self.filter_merged_transactions_by_symbol([x])) for x in stock_list}
         if "Transfer" in stock_list:
             stock_list.remove("Transfer")
-        result_dict["stock"] = self.calculate_irr(stock_list)
+        transactions = self.filter_merged_transactions_by_symbol(stock_list)
+        result_dict["stock"] = self.calculate_irr(transactions)
 
         return result_dict
 
@@ -185,8 +206,7 @@ class Portfolio:
             self.today - self.merged_individual_position_transaction.loc[:, "Run Date"]
         ).apply(lambda x: x.days) / 365.25
 
-    def calculate_irr(self, symbol_list, lower_bound=-0.999, upper_bound=5):
-        transactions = self.filter_merged_transactions_by_symbol(symbol_list)
+    def calculate_irr(self, transactions, lower_bound=-0.999, upper_bound=5):
 
         def npv(rate):
             return np.sum(
