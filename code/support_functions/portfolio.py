@@ -154,19 +154,20 @@ class Portfolio:
     
 
     def show_account_irr(self, account_symbol):
-        stock_irr = self.get_account_irr(account_symbol)
-        stock_irr_nice_look = pd.DataFrame(
+        account_irr = self.get_account_irr(account_symbol)
+        account_irr_nice_look = pd.DataFrame(
             {
-                "Stock": stock_irr.keys(),
-                "irr": [f"{(stock_irr[x]) * 100:.2f}%" for x in stock_irr.keys()],
+                "Class": account_irr.keys(),
+                "irr": [f"{(account_irr[x]) * 100:.2f}%" for x in account_irr.keys()],
             }
         )
-        print(pd.DataFrame(stock_irr_nice_look))
+        print(pd.DataFrame(account_irr_nice_look))
 
     def get_account_irr(self,account_symbol):
         if account_symbol == 'individual':
             result_dict = self.get_individual_irr()
-            
+        elif account_symbol == 'pension':
+            result_dict = self.get_pension_irr()
         return result_dict
             
     def get_individual_irr(self):
@@ -252,4 +253,6 @@ class Portfolio:
             self.merged_individual_position_transaction["Symbol"].isin(symbol_list)
         ]
         
+    def get_pension_irr(self):
+        pass
     
