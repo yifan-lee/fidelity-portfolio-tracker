@@ -19,10 +19,13 @@
 Run the following code.
 
 ```bash
+## install all required packages.
+pip install --file ./requirements.txt
+
+## display the distribution of investments and irr of each stock bought in individual account.
 python ./code/main.py
 ```
 
-It will display the distribution of investments and irr of each stock bought in individual account.
 
 ## Code
 
