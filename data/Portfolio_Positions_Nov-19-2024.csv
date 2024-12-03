@@ -1,0 +1,40 @@
+﻿Account Number,Account Name,Symbol,Description,Quantity,Last Price,Last Price Change,Current Value,Today's Gain/Loss Dollar,Today's Gain/Loss Percent,Total Gain/Loss Dollar,Total Gain/Loss Percent,Percent Of Account,Cost Basis Total,Average Cost Basis,Type
+Z23390746,Individual,FZFXX**,HELD IN MONEY MARKET,,,,$1061.71,,,,,0.17%,,,Cash
+Z23390746,Individual,912796ZV4,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 12/26/2024,30000,$99.537,$0.00,$29861.10,$0.00,0.00%,+$20.53,+0.06%,4.66%,$29840.57,--,Cash
+Z23390746,Individual,912797HP5,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 11/29/2024,50000,$99.876,$0.00,$49938.00,$0.00,0.00%,+$574.33,+1.16%,7.80%,$49363.67,--,Cash
+Z23390746,Individual,912797KA4,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 02/20/2025,20000,$98.862,$0.00,$19772.40,$0.00,0.00%,+$254.70,+1.30%,3.09%,$19517.70,--,Cash
+Z23390746,Individual,912797LE5,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 11/21/2024,50000,$99.976,$0.00,$49988.00,$0.00,0.00%,+$626.90,+1.27%,7.81%,$49361.10,--,Cash
+Z23390746,Individual,912797LP0,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 12/12/2024,20000,$99.715,$0.00,$19943.00,$0.00,0.00%,+$51.03,+0.25%,3.12%,$19891.97,--,Cash
+Z23390746,Individual,912797LR6,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/02/2025,30000,$99.452,$0.00,$29835.60,$0.00,0.00%,+$176.85,+0.59%,4.66%,$29658.75,--,Cash
+Z23390746,Individual,912797LX3,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/09/2025,50000,$99.372,$0.00,$49686.00,$0.00,0.00%,+$261.07,+0.52%,7.76%,$49424.93,--,Cash
+Z23390746,Individual,912797LY1,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/16/2025,50000,$99.289,$0.00,$49644.50,$0.00,0.00%,+$215.15,+0.43%,7.75%,$49429.35,--,Cash
+Z23390746,Individual,912797LZ8,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/30/2025,50000,$99.119,$0.00,$49559.50,$0.00,0.00%,+$126.99,+0.25%,7.74%,$49432.51,--,Cash
+Z23390746,Individual,912797MX2,UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/14/2025,20000,$99.307,$0.00,$19861.40,$0.00,0.00%,+$0.16,0.00%,3.10%,$19861.24,--,Cash
+Z23390746,Individual,AAPL,APPLE INC,70,$228.28,+$0.26,$15979.60,+$18.20,+0.11%,+$5219.61,+48.50%,2.50%,$10759.99,$153.71,Cash
+Z23390746,Individual,AMZN,AMAZON.COM INC,10,$204.61,+$2.91,$2046.10,+$29.10,+1.44%,+$1096.10,+115.37%,0.32%,$950.00,$95.00,Cash
+Z23390746,Individual,AXP,AMERICAN EXPRESS CO COM USD0.20,10,$285.55,+$0.01,$2855.50,+$0.10,0.00%,+$1355.50,+90.36%,0.45%,$1500.00,$150.00,Cash
+Z23390746,Individual,BRKB,BERKSHIRE HATHAWAY INC COM USD0.0033 CLASS B,10,$468.86,-$3.34,$4688.60,-$33.40,-0.71%,+$88.60,+1.92%,0.73%,$4600.00,$460.00,Cash
+Z23390746,Individual,COKE,COCA COLA CONS INC COM,2,$1223.62,+$14.37,$2447.24,+$28.74,+1.18%,+$272.24,+12.51%,0.38%,$2175.00,$1087.50,Cash
+Z23390746,Individual,FSKAX,FIDELITY TOTAL MARKET INDEX FUND,406.95,$164.11,+$0.77,$66784.56,+$313.35,+0.47%,+$6784.56,+11.30%,10.43%,$60000.00,$147.44,Cash
+Z23390746,Individual,FSPSX,FIDELITY INTERNATL INDEX FUND,1192.043,$49.46,-$0.06,$58958.44,-$71.53,-0.13%,-$1041.56,-1.74%,9.21%,$60000.00,$50.33,Cash
+Z23390746,Individual,FXAIX,FIDELITY 500 INDEX FUND,378.147,$205.81,+$0.82,$77826.43,+$310.08,+0.40%,+$7415.85,+10.53%,12.16%,$70410.58,$186.20,Cash
+Z23390746,Individual,GOOGL,ALPHABET INC CAP STK CL A,20,$178.12,+$2.82,$3562.40,+$56.40,+1.60%,+$1732.40,+94.66%,0.56%,$1830.00,$91.50,Cash
+Z23390746,Individual,JPM,JPMORGAN CHASE &CO. COM,10,$243.09,-$1.94,$2430.90,-$19.40,-0.80%,+$1230.90,+102.57%,0.38%,$1200.00,$120.00,Cash
+Z23390746,Individual,KHC,KRAFT HEINZ CO COM,100,$30.58,-$0.49,$3058.00,-$49.00,-1.58%,-$142.00,-4.44%,0.48%,$3200.00,$32.00,Cash
+Z23390746,Individual,MCD,MCDONALD S CORP,20,$290.73,-$0.37,$5814.60,-$7.40,-0.13%,+$657.10,+12.74%,0.91%,$5157.50,$257.88,Cash
+Z23390746,Individual,MSFT,MICROSOFT CORP,30,$417.79,+$2.03,$12533.70,+$60.90,+0.48%,-$809.25,-6.07%,1.96%,$13342.95,$444.77,Cash
+Z23390746,Individual,NKE,NIKE INC CLASS B COM NPV,30,$73.91,-$0.98,$2217.30,-$29.40,-1.31%,-$363.50,-14.09%,0.35%,$2580.80,$86.03,Cash
+Z23390746,Individual,SBUX,STARBUCKS CORP COM USD0.001,30,$98.35,-$2.05,$2950.50,-$61.50,-2.05%,+$497.10,+20.26%,0.46%,$2453.40,$81.78,Cash
+Z23390746,Individual,TSLA,TESLA INC COM,20,$346.00,+$7.26,$6920.00,+$145.20,+2.14%,+$3152.50,+83.67%,1.08%,$3767.50,$188.38,Cash
+86964,ERNST & YOUNG 401(K),84679P504,SP 500 INDEX PL CL E,21.889,$276.98,+$1.12,$6038.96,+$24.52,+0.41%,+$553.91,+10.10%,69.39%,$5485.05,$250.58,
+86964,ERNST & YOUNG 401(K),FBCGX,FID BLUE CHIP GR K6,73.768,$36.11,+$0.49,$2663.76,+$36.14,+1.38%,+$303.33,+12.85%,30.61%,$2360.43,$32.00,
+Z06872898,Cash Management (Individual),CORE**,FDIC-INSURED DEPOSIT SWEEP,,,,$105.49,,,,,100.00%,,,Cash
+241802439,Health Savings Account,FDRXX**,HELD IN MONEY MARKET,,,,$548.26,,,,,14.15%,,,Cash
+241802439,Health Savings Account,FXAIX,FIDELITY 500 INDEX FUND,15.385,$205.81,+$0.82,$3166.38,+$12.61,+0.40%,+$159.74,+5.31%,81.73%,$3006.64,$195.43,Cash
+241802439,Health Savings Account,Pending Activity,,,,,$159.61,,,,,,,,
+
+"The data and information in this spreadsheet is provided to you solely for your use and is not for distribution. The spreadsheet is provided for informational purposes only, and is not intended to provide advice, nor should it be construed as an offer to sell, a solicitation of an offer to buy or a recommendation for any security by Fidelity or any third party. Data and information shown is based on information known to Fidelity as of the date it was exported and is subject to change. It should not be used in place of your account statements or trade confirmations and is not intended for tax reporting purposes. For more information on the data included in this spreadsheet, including any limitations thereof, go to Fidelity.com."
+
+"Brokerage services are provided by Fidelity Brokerage Services LLC (FBS), 900 Salem Street, Smithfield, RI 02917. Custody and other services provided by National Financial Services LLC (NFS). Both are Fidelity Investment companies and members SIPC, NYSE. Neither FBS nor NFS offer crypto as a direct investment nor provide trading or custody services for such assets."
+
+"Date downloaded Nov-19-2024 at 11:00 p.m ET"

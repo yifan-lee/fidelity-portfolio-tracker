@@ -1,6 +1,12 @@
 ﻿
 
 Run Date,Account,Action,Symbol,Description,Type,Quantity,Price ($),Commission ($),Fees ($),Accrued Interest ($),Amount ($),Settlement Date
+ 11/19/2024,"Health Savings Account" 241802439," PARTIC CONTR CURRENT PARTICIPANT CUR YR (Cash)", ," No Description",Cash,0.000,,,,,159.61,
+ 11/15/2024,"ERNST & YOUNG 401(K)" 86964," Contributions",,"FID BLUE CHIP GR K6",,3.729,,,,,132.4,,
+ 11/15/2024,"ERNST & YOUNG 401(K)" 86964," Contributions",,"SP 500 INDEX PL CL E",,1.125,,,,,308.95,,
+ 11/14/2024,"Individual" Z23390746," DIVIDEND RECEIVED APPLE INC (AAPL) (Cash)", AAPL," APPLE INC",Cash,0.000,,,,,17.5,
+ 11/14/2024,"Individual" Z23390746," YOU BOUGHT UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/14/2025 (Cash)", 912797MX2," UNITED STATES TREAS BILLS ZERO CPN 0.00000% 01/14/2025",Cash,20000,99.31,,,,-19861.24,
+ 11/14/2024,"Individual" Z23390746," YOU BOUGHT KRAFT HEINZ CO COM (KHC) (Cash)", KHC," KRAFT HEINZ CO COM",Cash,100,32,,,,-3200,11/15/2024
  11/12/2024,"Individual" Z23390746," REDEMPTION PAYOUT UNITED STATES TREAS BILLS ZERO CPN 0.00000% 11/12/2024 (Cash)", 912797MB0," UNITED STATES TREAS BILLS ZERO CPN 0.00000% 11/12/2024",Cash,-20000,1,,,,20000,
  11/12/2024,"Individual" Z23390746," YOU BOUGHT UNITED STATES TREAS BILLS ZERO CPN 0.00000% 12/26/2024 (Cash)", 912796ZV4," UNITED STATES TREAS BILLS ZERO CPN 0.00000% 12/26/2024",Cash,30000,99.47,,,,-29840.57,
  11/08/2024,"Individual" Z23390746," DIVIDEND RECEIVED COCA COLA CONS INC COM (COKE) (Cash)", COKE," COCA COLA CONS INC COM",Cash,0.000,,,,,5,
@@ -55,4 +61,4 @@ Run Date,Account,Action,Symbol,Description,Type,Quantity,Price ($),Commission ($
 "Financial Services LLC (NFS). Both are Fidelity Investment companies and members SIPC, NYSE. Insurance products at Fidelity are distributed by"
 "Fidelity Insurance Agency, Inc., and, for certain products, by Fidelity Brokerage Services, Member NYSE, SIPC."
 
-Date downloaded 11/13/2024 11:16 pm
+Date downloaded 11/20/2024 3:11 pm
