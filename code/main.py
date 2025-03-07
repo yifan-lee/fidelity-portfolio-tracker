@@ -8,7 +8,7 @@ transactions = data_loader.load_transaction(data_folder_path, transaction_file_p
 position = data_loader.load_position(data_folder_path, position_file_pattern)
 
 current_portfolio = Portfolio(transactions=transactions, position=position)
-# current_portfolio.show_investment_distribution()
+current_portfolio.show_investment_distribution()
 current_portfolio.show_stock_irr()
 
 # print(current_portfolio.pension_transactions)
