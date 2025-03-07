@@ -57,6 +57,7 @@ def load_transaction(data_folder_path, transaction_file_pattern):
 
     transactions = combine_transaction_files(transaction_files)
     transactions = clean_transactions(transactions)
+    print(f"The latest transaction date is {transactions['Run Date'].max()}")
     return transactions
 
 
@@ -75,10 +76,10 @@ def clean_transactions(transactions):
     ]  # remove rows without  value
     transactions_copy["Run Date"] = pd.to_datetime(
         transactions_copy["Run Date"], format=" %m/%d/%Y"
-    ).dt.date
+    )
     transactions_copy["Settlement Date"] = pd.to_datetime(
         transactions_copy["Settlement Date"], format="%m/%d/%Y"
-    ).dt.date
+    )
     transactions_copy.loc[transactions_copy["Symbol"] == "  ", "Symbol"] = "Transfer"
     transactions_copy["Symbol"] = transactions_copy[
         "Symbol"
