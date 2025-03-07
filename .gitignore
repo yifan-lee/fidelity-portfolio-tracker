@@ -3,3 +3,6 @@
 
 ## ignore all __pycache__
 __pycache__/
+
+## ignore data file
+data/
