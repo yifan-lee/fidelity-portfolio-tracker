@@ -63,7 +63,7 @@ def load_transaction(data_folder_path, transaction_file_pattern):
 
 def combine_transaction_files(transaction_files):
     transaction_list = [
-        pd.read_csv(file, usecols=range(13)) for file in transaction_files
+        pd.read_csv(file, usecols=range(14)) for file in transaction_files
     ]
     transactions = pd.concat(transaction_list, ignore_index=True)
     return transactions

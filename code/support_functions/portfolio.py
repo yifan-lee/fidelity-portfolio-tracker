@@ -57,31 +57,38 @@ class Portfolio:
         self.transactions = transactions
         self.position = position
 
+        account_number_dic = {
+            "Individual":'Z23390746',
+            "401k":'86964',
+            "HSA":'241802439',
+            "Cash":'Z06872898'
+        }
+        
         self.today = datetime.now().date()
         self.individual_transactions = self.transactions[
-            self.transactions["Account"] == "Individual Z23390746"
+            self.transactions["Account Number"] == account_number_dic["Individual"]
         ]
         self.pension_transactions = self.transactions[
-            self.transactions["Account"] == "ERNST & YOUNG 401(K) 86964"
+            self.transactions["Account Number"] == account_number_dic["401k"]
         ]
         self.HSA_transactions = self.transactions[
-            self.transactions["Account"] == "Health Savings Account 241802439"
+            self.transactions["Account Number"] == account_number_dic["HSA"]
         ]
         self.cash_transactions = self.transactions[
-            self.transactions["Account"] == "Cash Management (Individual) Z06872898"
+            self.transactions["Account Number"] == account_number_dic["Cash"]
         ]
         
         self.individual_position = self.position[
-            self.position["Account Number"] == "Z23390746"
+            self.position["Account Number"] == account_number_dic["Individual"]
         ]
         self.pension_position = self.position[
-            self.position["Account Number"] == "86964"
+            self.position["Account Number"] == account_number_dic["401k"]
         ]
         self.HSA_position = self.position[
-            self.position["Account Number"] == "241802439"
+            self.position["Account Number"] == account_number_dic["HSA"]
         ]
         self.cash_position = self.position[
-            self.position["Account Number"] == "Z06872898"
+            self.position["Account Number"] == account_number_dic["Cash"]
         ]
         
 
