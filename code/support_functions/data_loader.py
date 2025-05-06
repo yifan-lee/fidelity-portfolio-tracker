@@ -92,6 +92,10 @@ def clean_transactions(transactions):
 
 def transfer_dollar_to_float(dat):
     """
-    Change "$123,456" to 123455
+    Change "$123,456" to 123456.0, and "--" to 0.0
     """
-    return dat.str.replace("$", "", regex=False).astype(float)
+    # Replace any "--" with "$0"
+    cleaned = dat.str.replace("--", "$0", regex=False)
+    # Remove dollar sign and commas, then convert to float
+    cleaned = cleaned.str.replace("$", "", regex=False).str.replace(",", "", regex=False)
+    return cleaned.astype(float)
