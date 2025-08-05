@@ -6,7 +6,6 @@ from datetime import datetime
 
 def load_position(data_folder_path, position_file_pattern):
 
-    position = None
     position_file_path_pattern = os.path.join(data_folder_path, position_file_pattern)
     position_files = glob.glob(position_file_path_pattern)
     position_file = find_latest_position_file(position_files)
@@ -50,44 +49,68 @@ def clean_position(position):
 
 
 def load_transaction(data_folder_path, transaction_file_pattern):
-    transaction_file_path_pattern = os.path.join(
-        data_folder_path, transaction_file_pattern
-    )
-    transaction_files = glob.glob(transaction_file_path_pattern)
-
-    transactions = combine_transaction_files(transaction_files)
-    transactions = clean_transactions(transactions)
+    transaction_files = _gather_transaction_files(data_folder_path,transaction_file_pattern)
+    transactions = _combine_transaction_files(transaction_files)
+    transactions = _clean_transactions(transactions)
     print(f"The latest transaction date is {transactions['Run Date'].max()}")
     return transactions
 
 
-def combine_transaction_files(transaction_files):
+def _gather_transaction_files(data_folder_path,transaction_file_pattern):
+    transaction_file_path_pattern = os.path.join(
+        data_folder_path, transaction_file_pattern
+    )
+    transaction_files = glob.glob(transaction_file_path_pattern)
+    return transaction_files
+
+def _combine_transaction_files(transaction_files):
     transaction_list = [
         pd.read_csv(file, usecols=range(14)) for file in transaction_files
     ]
     transactions = pd.concat(transaction_list, ignore_index=True)
     return transactions
 
+def _remove_NA_value(df,colName):
+    df_copy = df.copy()
+    df_copy = df_copy[
+        df_copy[colName].notna()
+    ] 
+    return df_copy
 
-def clean_transactions(transactions):
-    transactions_copy = transactions.copy()
-    transactions_copy = transactions_copy[
-        transactions_copy["Amount ($)"].notna()
-    ]  # remove rows without  value
-    transactions_copy["Run Date"] = pd.to_datetime(
-        transactions_copy["Run Date"], format=" %m/%d/%Y"
+def _remove_leading_space(df,colName):
+    df_copy = df.copy()
+    df_copy[colName] = df_copy[colName].str.lstrip()
+    return df_copy
+
+def _str_to_date(df, colName, format):
+    df_copy = df.copy()
+    df_copy[colName] = pd.to_datetime(
+        df_copy[colName], format=format
     ).dt.date
-    transactions_copy["Settlement Date"] = pd.to_datetime(
-        transactions_copy["Settlement Date"], format="%m/%d/%Y"
-    ).dt.date
-    transactions_copy.loc[transactions_copy["Symbol"] == "  ", "Symbol"] = "Transfer"
-    transactions_copy["Symbol"] = transactions_copy[
-        "Symbol"
-    ].str.lstrip()  # remove space at the beginning of Symbol
-    transactions_copy = transactions_copy.sort_values(by="Run Date").reset_index(
+    return df_copy
+
+def _add_Transfer_symbol(df):
+    df_copy = df.copy()
+    df_copy.loc[df_copy["Symbol"] == "  ", "Symbol"] = "Transfer"
+    return df_copy
+
+def _sort_df_by_column(df, colName):
+    df_copy = df.copy()
+    df_copy = df_copy.sort_values(by=colName).reset_index(
         drop=True
     )
-    return transactions_copy
+    return df_copy
+
+
+def _clean_transactions(transactions):
+    transactions = _remove_NA_value(transactions,"Amount ($)")
+    transactions = _remove_leading_space(transactions,"Run Date")
+    transactions = _str_to_date(transactions,"Run Date","%m/%d/%Y")
+    transactions = _str_to_date(transactions,"Settlement Date","%m/%d/%Y")
+    transactions = _add_Transfer_symbol(transactions)
+    transactions = _remove_leading_space(transactions,"Symbol")
+    transactions = _sort_df_by_column(transactions,"Run Date")
+    return transactions
 
 
 def transfer_dollar_to_float(dat):
