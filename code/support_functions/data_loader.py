@@ -5,20 +5,23 @@ from datetime import datetime
 
 
 def load_position(data_folder_path, position_file_pattern):
-
-    position_file_path_pattern = os.path.join(data_folder_path, position_file_pattern)
-    position_files = glob.glob(position_file_path_pattern)
-    position_file = find_latest_position_file(position_files)
+    position_file = _gather_position_files(data_folder_path, position_file_pattern)
 
     if not position_file is None:
         position = pd.read_csv(position_file)
-        position = clean_position(position)
+        position = _clean_position(position)
     else:
         print("No position file found.")
     return position
 
+def _gather_position_files(data_folder_path, position_file_pattern):
+    position_file_path_pattern = os.path.join(data_folder_path, position_file_pattern)
+    position_files = glob.glob(position_file_path_pattern)
+    position_file = _find_latest_position_file(position_files)
+    return position_file
 
-def find_latest_position_file(position_files):
+
+def _find_latest_position_file(position_files):
     latest_file = None
     latest_date = None
 
@@ -34,17 +37,10 @@ def find_latest_position_file(position_files):
     return latest_file
 
 
-def clean_position(position):
-    position_copy = position.copy()
-    position_copy = position_copy[
-        position_copy["Current Value"].notna()
-    ]  # remove rows without current value
-    position_copy["Current Value"] = transfer_dollar_to_float(
-        position_copy["Current Value"]
-    )
-    position_copy["Cost Basis Total"] = transfer_dollar_to_float(
-        position_copy["Cost Basis Total"]
-    )
+def _clean_position(position):
+    position = _remove_NA_value(position,"Current Value")
+    position = _transfer_dollar_to_float(position, "Current Value")
+    position = _transfer_dollar_to_float(position, "Cost Basis Total")
     return position_copy
 
 
@@ -113,12 +109,14 @@ def _clean_transactions(transactions):
     return transactions
 
 
-def transfer_dollar_to_float(dat):
+def _transfer_dollar_to_float(df, colNames):
     """
     Change "$123,456" to 123456.0, and "--" to 0.0
     """
+    df_copy = df.copy()
     # Replace any "--" with "$0"
-    cleaned = dat.str.replace("--", "$0", regex=False)
+    cleaned = df_copy[colNames].str.replace("--", "$0", regex=False)
     # Remove dollar sign and commas, then convert to float
     cleaned = cleaned.str.replace("$", "", regex=False).str.replace(",", "", regex=False)
-    return cleaned.astype(float)
+    df_copy[colNames] = cleaned.astype(float)
+    return df_copy
