@@ -41,7 +41,20 @@ def _clean_position(position):
     position = _remove_NA_value(position,"Current Value")
     position = _transfer_dollar_to_float(position, "Current Value")
     position = _transfer_dollar_to_float(position, "Cost Basis Total")
-    return position_copy
+    return position
+
+
+def _transfer_dollar_to_float(df, colNames):
+    """
+    Change "$123,456" to 123456.0, and "--" to 0.0
+    """
+    df_copy = df.copy()
+    # Replace any "--" with "$0"
+    cleaned = df_copy[colNames].str.replace("--", "$0", regex=False)
+    # Remove dollar sign and commas, then convert to float
+    cleaned = cleaned.str.replace("$", "", regex=False).str.replace(",", "", regex=False)
+    df_copy[colNames] = cleaned.astype(float)
+    return df_copy
 
 
 def load_transaction(data_folder_path, transaction_file_pattern):
@@ -108,15 +121,3 @@ def _clean_transactions(transactions):
     transactions = _sort_df_by_column(transactions,"Run Date")
     return transactions
 
-
-def _transfer_dollar_to_float(df, colNames):
-    """
-    Change "$123,456" to 123456.0, and "--" to 0.0
-    """
-    df_copy = df.copy()
-    # Replace any "--" with "$0"
-    cleaned = df_copy[colNames].str.replace("--", "$0", regex=False)
-    # Remove dollar sign and commas, then convert to float
-    cleaned = cleaned.str.replace("$", "", regex=False).str.replace(",", "", regex=False)
-    df_copy[colNames] = cleaned.astype(float)
-    return df_copy
