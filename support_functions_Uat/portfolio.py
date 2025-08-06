@@ -73,7 +73,7 @@ class Portfolio:
         result = result.sort_values(by='Current Value', ascending=False)
         return result
     
-    def get_all_bond_summary(self):
+    def get_all_bond_summary(self,showExpiredBond=False):
         bondSymbols = self.get_bond_symbol_list()
         currentValueResult = self.get_symbol_current_values(bondSymbols)
         irrResult = self.get_symbol_irrs(bondSymbols)
@@ -81,7 +81,10 @@ class Portfolio:
         result = pd.merge(currentValueResult, irrResult, on='Symbol')
         result = pd.merge(result, holdingPeriodResult, on='Symbol')
         result = result.sort_values(by='Current Value', ascending=False)
+        if not showExpiredBond:
+            result = result[result['Current Value']>0]
         return result
+    
     
     def get_combined_symbol_holding_period(self, listSymbols: list, unit = 30):
         subTransactions = self.transactions[self.transactions['Symbol'].isin(listSymbols)]
