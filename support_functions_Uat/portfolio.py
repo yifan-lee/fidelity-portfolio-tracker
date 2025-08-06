@@ -320,14 +320,4 @@ class HSAPortfolio(Portfolio):
         super().__init__(transactions, position)
         self.transactions = transactions[transactions['Account Number']==self.account_number_dic["HSA"]]
         self.position = position[position['Account Number']==self.account_number_dic["HSA"]]
-        
-    def get_combined_key_irr(self, listKeys: list, colName):
-        trans = self.transactions[self.transactions[colName].isin(listKeys)]
-        cashflows = trans['Amount ($)'].tolist()
-        cashflows = [-x for x in cashflows]
-        dates = trans['Run Date'].tolist()
-        current_value = self.position.loc[self.position[colName].isin(listKeys), 'Current Value'].sum()
-        cashflows.append(current_value)
-        dates.append(self.cob)
-        irr = compute_irr(cashflows, dates, self.cob)
-        return irr
+       

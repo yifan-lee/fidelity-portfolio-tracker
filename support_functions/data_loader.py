@@ -118,6 +118,7 @@ def _clean_transactions(transactions):
     transactions = _str_to_date(transactions,"Settlement Date","%m/%d/%Y")
     transactions = _add_Transfer_symbol(transactions)
     transactions = _remove_leading_space(transactions,"Symbol")
+    transactions = _remove_leading_space(transactions,"Description")
     transactions = _sort_df_by_column(transactions,"Run Date")
     return transactions
 
