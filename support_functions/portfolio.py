@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from support_functions.compute_irr import compute_irr
 
-
 class Portfolio:
     def __init__(self, transactions, position):
         self.transactions = transactions
@@ -28,7 +27,8 @@ class Portfolio:
         
         
         self.cashSymbols = ['FZFXX**','FZFXX']
-        self.otherSymbols = ['Pending Activity','','Transfer']
+        self.otherSymbols = ['Pending Activity']
+        self.contributionSymbols = ['','Transfer']
         self.bondSymbols = self.get_bond_symbol_list()
         self.stockSymbols = self.get_stock_symbol_list()
         
@@ -36,21 +36,28 @@ class Portfolio:
         bondSymbols = self.get_bond_symbol_list()
         bondTotalValue = self.get_total_symbols_value(bondSymbols)
         bondTotalIrr = self.get_combined_symbol_irr(bondSymbols)
+        bondHoldingPeriod = self.get_combined_symbol_holding_period(bondSymbols)
         
         stockSymbols = self.get_stock_symbol_list()
         stockTotalValue = self.get_total_symbols_value(stockSymbols)
         stockTotalIrr = self.get_combined_symbol_irr(stockSymbols)
+        stockHoldingPeriod = self.get_combined_symbol_holding_period(stockSymbols)
         
         cashSymbols = self.cashSymbols
         cashTotalValue = self.get_total_symbols_value(cashSymbols)
         cashTotalIrr = self.get_combined_symbol_irr(cashSymbols)
+        cashHoldingPeriod = self.get_combined_symbol_holding_period(cashSymbols)
+        
+        totalIRR = self.get_total_irr()
+        totalHoldingPeriod = self.get_combined_symbol_holding_period(cashSymbols+stockSymbols+bondSymbols)
         
         totalValue = self.individualPosition['Current Value'].sum()
         result = pd.DataFrame({
-            'Type':['bond','stock','cash'],
-            'Value': [bondTotalValue,stockTotalValue,cashTotalValue],
-            'Percentage':[bondTotalValue,stockTotalValue,cashTotalValue]/totalValue,
-            'IRR':[bondTotalIrr, stockTotalIrr, cashTotalIrr]
+            'Type':['bond','stock','cash','Total'],
+            'Value': [bondTotalValue,stockTotalValue,cashTotalValue,totalValue],
+            'Percentage':[bondTotalValue,stockTotalValue,cashTotalValue,totalValue]/totalValue,
+            'IRR':[bondTotalIrr, stockTotalIrr, cashTotalIrr,totalIRR],
+            'Weighted Avg Holding Period':[bondHoldingPeriod,stockHoldingPeriod,cashHoldingPeriod,totalHoldingPeriod]
         } 
         )
         return result
@@ -76,12 +83,15 @@ class Portfolio:
         result = result.sort_values(by='Current Value', ascending=False)
         return result
     
-    def get_all_bond_irr(self):
-        bondSymbols = self.get_bond_symbol_list()
-        result = self.get_symbol_irrs(bondSymbols)
-        return result
-    
-    
+    def get_combined_symbol_holding_period(self, listSymbols: list, unit = 30):
+        subTransactions = self.transactions[self.transactions['Symbol'].isin(listSymbols)]
+        buyTranactions = subTransactions[subTransactions['Amount ($)']<0]
+        df = buyTranactions.copy()
+        df['Days Held'] = (self.cob - df['Run Date']).apply(lambda x: x.days)
+        df['Weight'] = df['Amount ($)'].abs()
+        totalWeightedHold = (df['Days Held'] * df['Weight']).sum() / df['Weight'].sum()/ unit
+        return totalWeightedHold
+        
     def get_symbol_holding_period(self, listSymbols: list, unit = 30):
         subTransactions = self.transactions[self.transactions['Symbol'].isin(listSymbols)]
         buyTranactions = subTransactions[subTransactions['Amount ($)']<0]
@@ -147,6 +157,18 @@ class Portfolio:
             })
         return pd.DataFrame(resultList)
     
+    
+    def get_total_irr(self):
+        trans = self.individualTransactions[self.individualTransactions['Symbol'].isin(self.contributionSymbols)]
+        cashflows = trans['Amount ($)'].tolist()
+        cashflows = [-x for x in cashflows]
+        dates = trans['Run Date'].tolist()
+        current_value = self.individualPosition['Current Value'].sum()
+        cashflows.append(current_value)
+        dates.append(self.cob)
+        irr = compute_irr(cashflows, dates, self.cob)
+        return irr
+    
     def get_combined_symbol_irr(self, listSymbols: list):
         trans = self.transactions[self.transactions['Symbol'].isin(listSymbols)]
         cashflows = trans['Amount ($)'].tolist()
@@ -164,6 +186,7 @@ class Portfolio:
             if sym not in self.cashSymbols
             and not sym.startswith('91')
             and sym not in self.otherSymbols
+            and sym not in self.contributionSymbols
         ]
         return stockSymbols
     
@@ -174,7 +197,6 @@ class Portfolio:
             if  sym.startswith('91')
         ]
         return bondSymbols
-    
     
 # class Portfolio:
 #     """
