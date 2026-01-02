@@ -2,6 +2,7 @@ from support_functions.analysis import load_data, categorize_asset, xirr
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from pathlib import Path
 
 def analyze_symbol_performance(positions_df, history_df):
     """
@@ -89,9 +90,8 @@ def analyze_symbol_performance(positions_df, history_df):
     return pd.DataFrame(results)
 
 def main():
-    import numpy as np # Ensure numpy is available inside main if needed
-    
-    data_dir = './data'
+    project_path= Path.cwd()
+    data_dir = f'{project_path}/data'
     positions_df, history_df = load_data(data_dir)
     
     print("\n" + "="*50)
