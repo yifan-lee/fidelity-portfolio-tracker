@@ -5,36 +5,9 @@ import glob
 from datetime import datetime
 from scipy import optimize
 
-def clean_currency(x):
-    """
-    Remove '$' and ',' from currency strings and convert to float.
-    Handles '+$...' '-$...' and plain numbers.
-    """
-    if pd.isna(x) or x == '--' or x == '':
-        return 0.0
-    if isinstance(x, (int, float)):
-        return float(x)
-    x = str(x).replace('$', '').replace(',', '').replace('%', '')
-    # Handle negative signs explicitly if needed, though replace usually suffices for standard formats
-    # Check for negative values represented as ($100)
-    if '(' in x and ')' in x:
-        x = x.replace('(', '-').replace(')', '')
-    return float(x)
 
-def clean_positions(positions_df):
-    # Clean Position Columns
-    cols_to_clean = [
-        'Last Price', 'Current Value', 'Cost Basis Total', 
-        'Today\'s Gain/Loss Dollar', 'Total Gain/Loss Dollar'
-    ]
-    for col in cols_to_clean:
-        if col in positions_df.columns:
-            positions_df[col] = positions_df[col].apply(clean_currency)
-    
-    # Clean Quantity (remove match for formatting issues if any)
-    if 'Quantity' in positions_df.columns:
-         positions_df['Quantity'] = pd.to_numeric(positions_df['Quantity'], errors='coerce').fillna(0)
-    return positions_df
+
+
 
 def parse_date(date_str):
     """Parse various date formats."""
@@ -45,89 +18,21 @@ def parse_date(date_str):
     except Exception:
         return None
 
-def get_latest_position_file(data_dir):
-    """Find the latest Portfolio_Positions file based on the date in filename."""
-    files = glob.glob(os.path.join(data_dir, 'Portfolio_Positions_*.csv'))
-    if not files:
-        raise FileNotFoundError("No Portfolio_Positions files found.")
-    
-    # Parse dates from filenames: Portfolio_Positions_MMM-DD-YYYY.csv
-    # Example: Portfolio_Positions_Dec-31-2025.csv
-    latest_file = None
-    latest_date = None
-    
-    for f in files:
-        basename = os.path.basename(f)
-        date_part = basename.replace('Portfolio_Positions_', '').replace('.csv', '')
-        try:
-            date_obj = datetime.strptime(date_part, '%b-%d-%Y')
-            if latest_date is None or date_obj > latest_date:
-                latest_date = date_obj
-                latest_file = f
-        except ValueError:
-            continue
-            
-    return latest_file, latest_date
 
 
-def load_transactions(data_dir):
-    hist_files = glob.glob(os.path.join(data_dir, 'Accounts_History_*.csv'))
-    transactions_dfs = []
-    print(f"Found {len(hist_files)} history files.")
-    
-    for f in hist_files:
-        df = pd.read_csv(f, on_bad_lines='skip') 
-        transactions_dfs.append(df)
 
-    transactions_df = pd.concat(transactions_dfs, ignore_index=True)
-    return transactions_df
-    
-def clean_transactions(transactions_df):
-    # remove space in the beginning of column
-    for col in transactions_df.columns:
-        if (
-            (transactions_df[col].dtype == 'object' ) or 
-            (transactions_df[col].dtype == 'string')
-        ):
-            transactions_df[col] = transactions_df[col].str.strip()   
-    # Standardize dates
-    transactions_df['Run Date'] = pd.to_datetime(transactions_df['Run Date'], errors='coerce')
-    # Sometimes 'Settlement Date' exists
-    if 'Settlement Date' in transactions_df.columns:
-         transactions_df['Settlement Date'] = pd.to_datetime(transactions_df['Settlement Date'], errors='coerce')
-    
 
-    # Clean numeric columns
-    transactions_numeric_cols = [
-    'Amount ($)', 'Price ($)', 'Quantity', 
-        'Commission ($)', 'Fees ($)', 'Accrued Interest ($)'
-    ]
-    for col in transactions_numeric_cols:
-        if col in transactions_df.columns:
-            transactions_df[col] = transactions_df[col].apply(clean_currency)
-        
-    # Sort by date
-    transactions_df = transactions_df.sort_values('Run Date')
-    return transactions_df
 
-def load_data(data_dir):
-    """
-    Load the latest position file and all history files.
-    Returns: positions_df, history_df
-    """
-    # 1. Load Positions
-    pos_file, pos_date = get_latest_position_file(data_dir)
-    print(f"Loading positions from: {pos_file} (Date: {pos_date.strftime('%Y-%m-%d')})")
-    positions_df = pd.read_csv(pos_file, index_col=False)
 
-    positions_df = clean_positions(positions_df)
 
-    # 2. Load History
-    transactions_df = load_transactions(data_dir)
-    
-    transactions_df = clean_transactions(transactions_df)
-    
-    return positions_df, transactions_df, pos_date
+
+
+
+
+
+
+
+
 
 def categorize_asset(row):
     """
@@ -181,6 +86,162 @@ def xirr(cash_flows):
         return res
     except RuntimeError:
         return None
+
+
+# --- Unified Analysis System ---
+
+def filter_transactions(history_df, account_num=None, symbol=None):
+    """Filter transactions by Account and/or Symbol."""
+    df = history_df.copy()
+    if account_num:
+        df = df[df['Account Number'] == account_num]
+    if symbol:
+        df = df[df['Symbol'] == symbol]
+    return df
+
+def identify_funding_flow(row):
+    """
+    For Account Analysis:
+    Identify if row is a funding event (Deposit/Withdrawal).
+    Returns (is_funding, flow_amount)
+    Flow convention: Deposit is Investment (Negative Flow), Withdrawal is Return (Positive Flow).
+    Since Fidelity Deposit is (+), we return -1 * Amount.
+    """
+    action = str(row['Action']).upper()
+    amount = row['Amount ($)']
+    
+    if pd.isna(amount) or amount == 0:
+        return False, 0.0
+
+    funding_patterns = ['ELECTRONIC FUNDS TRANSFER', 'CHECK RECEIVED', 'DEPOSIT', 'WIRE', 'BILL PAY', 'CONTRIB', 'PARTIC CONTR']
+    exclude_patterns = ['DIVIDEND', 'INTEREST', 'REINVESTMENT', 'YOU BOUGHT', 'YOU SOLD', 'REDEMPTION', 'FEE', 'EXCHANGE', 'MARKET', 'CASH RESERVES', 'GAIN', 'LOSS']
+    
+    is_funding = False
+    if any(p in action for p in funding_patterns):
+        is_funding = True
+    if any(p in action for p in exclude_patterns):
+        is_funding = False
+        
+    if is_funding:
+        return True, -1 * amount
+    return False, 0.0
+
+def build_cash_flows(transactions_df, mode='trade'):
+    """
+    Construct cash flow series from filtered transactions.
+    mode='trade': All transactions are flows. Flow = Amount. (Symbol Analysis)
+    mode='funding': Only funding transactions. Flow = -Amount. (Account Analysis)
+    
+    Returns: list of (date, flow), total_invested_basis
+    """
+    cash_flows = []
+    total_invested = 0.0
+    
+    for _, row in transactions_df.iterrows():
+        date = row['Run Date']
+        amount = row['Amount ($)']
+        
+        if mode == 'funding':
+            is_valid, flow = identify_funding_flow(row)
+            if not is_valid:
+                continue
+        else:
+            # Trade Mode: Flow is just the amount (Buy is -, Sell/Div is +)
+            # Exception: "Contributions" in 401k are often positive amounts but represent investment (Buy).
+            if 'CONTRIBUTION' in str(row['Action']).upper() and amount > 0:
+                flow = -1 * amount
+            else:
+                flow = amount
+            
+        cash_flows.append((date, flow))
+        
+        # Track Invested Capital (Sum of negative flows)
+        if flow < 0:
+            total_invested += abs(flow)
+            
+    return cash_flows, total_invested
+
+def calculate_metrics(cash_flows, current_value, latest_date, total_invested_basis):
+    """
+    Calculate generic metrics: IRR, Total Return $, ROI %.
+    """
+    # Append terminal value
+    final_flows = cash_flows.copy()
+    if current_value > 0:
+        final_flows.append((latest_date, current_value))
+        
+    irr_val = xirr(final_flows)
+    
+    # Total Return $ = (Sum of Flows + Current Value)
+    # Note: Flows includes the initial negative investments.
+    # So Sum(Flows) is Net Realized PnL.
+    # Adding Current Value gives Total PnL.
+    # Wait, simple check: Invest -100. Current 110. Sum Flows = -100. Total PnL = -100 + 110 = 10. Correct.
+    total_return_dollar = sum([f for _, f in cash_flows]) + current_value
+    
+    # ROI
+    roi = (total_return_dollar / total_invested_basis) if total_invested_basis > 0 else 0.0
+    
+    return {
+        'Total Invested': total_invested_basis,
+        'Total Return ($)': total_return_dollar,
+        'ROI': roi,
+        'IRR': irr_val if irr_val is not None else 0.0
+    }
+
+def analyze_entity_performance(history_df, latest_date, current_value, account_num=None, symbol=None, mode='trade'):
+    """
+    Generic Entry Point for analyzing an entity (Account or Symbol).
+    """
+    # 1. Filter Transactions
+    filtered_hist = filter_transactions(history_df, account_num, symbol)
+    
+    # 2. Build Cash Flows
+    cash_flows, total_invested = build_cash_flows(filtered_hist, mode=mode)
+    
+    # 3. Calculate Metrics
+    return calculate_metrics(cash_flows, current_value, latest_date, total_invested)
+
+# --- Wrappers for backward compatibility / convenience ---
+
+def analyze_symbol_performance(positions_df, history_df, latest_date):
+    """Iterate positions and calculate performance using Unified System (mode='trade')."""
+    results = []
+    
+    # Filter out Pending activity
+    # Check both Account Name and Symbol just in case
+    mask = (positions_df['Account Name'] != 'Pending activity') & (positions_df['Symbol'] != 'Pending activity')
+    valid_positions = positions_df[mask]
+    
+    for _, row in valid_positions.iterrows():
+        sym = row['Symbol']
+        acc_num = row['Account Number']
+        curr_val = row['Current Value']
+        
+        metrics = analyze_entity_performance(
+            history_df, latest_date, curr_val, 
+            account_num=acc_num, symbol=sym, mode='trade'
+        )
+        
+        results.append({
+            'Account Name': row['Account Name'],
+            'Account Number': acc_num,
+            'Symbol': sym,
+            'Asset Type': categorize_asset(row),
+            'Current Value': curr_val,
+            'Total Invested': metrics['Total Invested'],
+            'Total Return ($)': metrics['Total Return ($)'],
+            'Total Return (%)': metrics['ROI'],
+            'IRR': metrics['IRR']
+        })
+    return pd.DataFrame(results)
+
+def analyze_account_performance(history_df, account_num, latest_date, current_account_value):
+    """Analyze account using Unified System (mode='funding')."""
+    return analyze_entity_performance(
+        history_df, latest_date, current_account_value, 
+        account_num=account_num, mode='funding'
+    )
         
 # Example usage block (not executed on import)
 if __name__ == "__main__":
