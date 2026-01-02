@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from pathlib import Path
 
-def analyze_symbol_performance(positions_df, history_df):
+def analyze_symbol_performance(positions_df, history_df, latest_date):
     """
     Calculate performance for each symbol in the current portfolio.
     """
@@ -43,7 +43,7 @@ def analyze_symbol_performance(positions_df, history_df):
         # Div: Amount is positive (inflow).
         # So we can sum 'Amount ($)' directly.
         
-        relevant_actions = symbol_hist[symbol_hist['Amount ($)'].notna()]
+        relevant_actions = symbol_hist[symbol_hist['Amount ($)'].notna()].reset_index(drop=True)
         
         total_invested = 0
         total_returned = 0
@@ -58,11 +58,11 @@ def analyze_symbol_performance(positions_df, history_df):
             else:
                 total_returned += amt
                 
-        # 2. Add Current Value as a final "inflow" on today's date
+        # 2. Add Current Value as a final "inflow" on the latest position date
         # Only if we currently hold it (Current Value > 0)
-        today = datetime.now()
+        # today = datetime.now() -> Changed to latest_date from file
         if current_val > 0:
-            cash_flows.append((today, current_val))
+            cash_flows.append((latest_date, current_val))
             
         # Metrics
         irr_val = xirr(cash_flows)
@@ -92,7 +92,7 @@ def analyze_symbol_performance(positions_df, history_df):
 def main():
     project_path= Path.cwd()
     data_dir = f'{project_path}/data'
-    positions_df, history_df = load_data(data_dir)
+    positions_df, history_df, latest_date = load_data(data_dir)
     
     print("\n" + "="*50)
     print("FIDELITY PORTFOLIO ANALYSIS")
@@ -113,7 +113,8 @@ def main():
     
     # Let's generate the detailed table first (Requirement #3 & #4)
     print("\nCalculating performance for all positions...")
-    perf_df = analyze_symbol_performance(positions_df, history_df)
+    perf_df = analyze_symbol_performance(positions_df, history_df, latest_date)
+
     
     # Fill NaNs for display
     perf_df['IRR'] = perf_df['IRR'].fillna(0.0)
