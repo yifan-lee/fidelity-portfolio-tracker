@@ -21,6 +21,21 @@ def clean_currency(x):
         x = x.replace('(', '-').replace(')', '')
     return float(x)
 
+def clean_positions(positions_df):
+    # Clean Position Columns
+    cols_to_clean = [
+        'Last Price', 'Current Value', 'Cost Basis Total', 
+        'Today\'s Gain/Loss Dollar', 'Total Gain/Loss Dollar'
+    ]
+    for col in cols_to_clean:
+        if col in positions_df.columns:
+            positions_df[col] = positions_df[col].apply(clean_currency)
+    
+    # Clean Quantity (remove match for formatting issues if any)
+    if 'Quantity' in positions_df.columns:
+         positions_df['Quantity'] = pd.to_numeric(positions_df['Quantity'], errors='coerce').fillna(0)
+    return positions_df
+
 def parse_date(date_str):
     """Parse various date formats."""
     if pd.isna(date_str):
@@ -54,6 +69,42 @@ def get_latest_position_file(data_dir):
             
     return latest_file, latest_date
 
+
+def load_transactions(data_dir):
+    hist_files = glob.glob(os.path.join(data_dir, 'Accounts_History_*.csv'))
+    transactions_dfs = []
+    print(f"Found {len(hist_files)} history files.")
+    
+    for f in hist_files:
+        df = pd.read_csv(f, on_bad_lines='skip') 
+        transactions_dfs.append(df)
+
+    transactions_df = pd.concat(transactions_dfs, ignore_index=True)
+    return transactions_df
+    
+def clean_transactions(transactions_df):
+    # Standardize dates
+    transactions_df['Run Date'] = pd.to_datetime(transactions_df['Run Date'], errors='coerce')
+    # Sometimes 'Settlement Date' exists
+    if 'Settlement Date' in transactions_df.columns:
+         transactions_df['Settlement Date'] = pd.to_datetime(transactions_df['Settlement Date'], errors='coerce')
+    # remove space in the beginning of symbol column
+    if 'Symbol' in transactions_df.columns:
+        transactions_df['Symbol'] = transactions_df['Symbol'].str.strip()
+
+    # Clean numeric columns
+    hist_numeric_cols = [
+    'Amount ($)', 'Price ($)', 'Quantity', 
+        'Commission ($)', 'Fees ($)', 'Accrued Interest ($)'
+    ]
+    for col in hist_numeric_cols:
+        if col in transactions_df.columns:
+            transactions_df[col] = transactions_df[col].apply(clean_currency)
+        
+    # Sort by date
+    transactions_df = transactions_df.sort_values('Run Date')
+    return transactions_df
+
 def load_data(data_dir):
     """
     Load the latest position file and all history files.
@@ -62,93 +113,16 @@ def load_data(data_dir):
     # 1. Load Positions
     pos_file, pos_date = get_latest_position_file(data_dir)
     print(f"Loading positions from: {pos_file} (Date: {pos_date.strftime('%Y-%m-%d')})")
-    
-    # Read position file. Skip rows that are just explanatory text if any (usually header handles it)
-    # Based on inspection, the file has a header row.
-    # Data rows have a trailing comma but header does not, causing pandas to shift columns.
-    # We can fix this by reading with index_col=False, but specifically for this mismatch case:
-    # If we use engine='python', we can use generic handling.
-    # Or simplified: if row has extra comma, it creates an unnamed column at the end if we don't treat first col as index.
-    # Better approach: Read header, then read data, ensure column count matches.
-    
-    try:
-        # Try reading with skipping the potential issue or explicitly setting names if needed.
-        # But simpler fix for "Header N, Data N+1" is index_col=False usually works? 
-        # Actually with N+1 data, pandas thinks col 1 is index.
-        positions_df = pd.read_csv(pos_file, index_col=False)
-        
-        # Check if the last column is unnamed (from trailing comma) and drop it
-        if positions_df.columns[-1].startswith('Unnamed'):
-             positions_df = positions_df.iloc[:, :-1]
-             
-    except Exception:
-        # Fallback
-        positions_df = pd.read_csv(pos_file)
+    positions_df = pd.read_csv(pos_file, index_col=False)
 
-    # Clean Position Columns
-    cols_to_clean = ['Last Price', 'Current Value', 'Cost Basis Total', 'Today\'s Gain/Loss Dollar', 'Total Gain/Loss Dollar']
-    for col in cols_to_clean:
-        if col in positions_df.columns:
-            positions_df[col] = positions_df[col].apply(clean_currency)
-    
-    # Clean Quantity (remove match for formatting issues if any)
-    if 'Quantity' in positions_df.columns:
-         positions_df['Quantity'] = pd.to_numeric(positions_df['Quantity'], errors='coerce').fillna(0)
+    positions_df = clean_positions(positions_df)
 
     # 2. Load History
-    hist_files = glob.glob(os.path.join(data_dir, 'Accounts_History_*.csv'))
-    history_dfs = []
-    print(f"Found {len(hist_files)} history files.")
+    transactions_df = load_transactions(data_dir)
     
-    for f in hist_files:
-        # History files start with "Run Date,Account,..." but sometimes have empty lines at top?
-        # Use python engine for more robust handling of quotes and separators
-        try:
-            df = pd.read_csv(f, on_bad_lines='skip') 
-        except Exception as e:
-            print(f"Warning: Failed to read {f} with default settings. Retrying with flexible parsing. Error: {e}")
-            try:
-                # Sometimes header is on a different line or there's metadata at the top
-                # Let's try to detect header
-                with open(f, 'r') as tmp_f:
-                    lines = tmp_f.readlines()
-                
-                header_row = 0
-                for i, line in enumerate(lines[:20]):
-                    if "Run Date" in line and "Account" in line:
-                        header_row = i
-                        break
-                
-                df = pd.read_csv(f, header=header_row, on_bad_lines='skip')
-            except Exception as e2:
-                print(f"Error reading {f}: {e2}")
-                continue
-                
-        history_dfs.append(df)
+    transactions_df = clean_transactions(transactions_df)
     
-    if history_dfs:
-        history_df = pd.concat(history_dfs, ignore_index=True)
-    else:
-        history_df = pd.DataFrame()
-        
-    # Clean History Columns
-    if not history_df.empty:
-        # Standardize dates
-        history_df['Run Date'] = pd.to_datetime(history_df['Run Date'], errors='coerce')
-        # Sometimes 'Settlement Date' exists
-        if 'Settlement Date' in history_df.columns:
-             history_df['Settlement Date'] = pd.to_datetime(history_df['Settlement Date'], errors='coerce')
-        
-        # Clean numeric columns
-        hist_numeric_cols = ['Amount ($)', 'Price ($)', 'Quantity', 'Commission ($)', 'Fees ($)', 'Accrued Interest ($)']
-        for col in hist_numeric_cols:
-            if col in history_df.columns:
-                history_df[col] = history_df[col].apply(clean_currency)
-        
-        # Sort by date
-        history_df = history_df.sort_values('Run Date')
-        
-    return positions_df, history_df
+    return positions_df, transactions_df
 
 def categorize_asset(row):
     """
