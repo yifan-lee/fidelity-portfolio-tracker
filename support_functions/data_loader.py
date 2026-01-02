@@ -45,7 +45,7 @@ def get_latest_position_file(data_dir):
                 latest_file = f
         except ValueError:
             continue
-            
+    latest_date = pd.to_datetime(latest_date)
     return latest_file, latest_date
 
 def clean_positions(positions_df):
@@ -62,6 +62,7 @@ def clean_positions(positions_df):
     # Clean Quantity (remove match for formatting issues if any)
     if 'Quantity' in positions_df.columns:
          positions_df['Quantity'] = pd.to_numeric(positions_df['Quantity'], errors='coerce').fillna(0)
+    positions_df['Asset Type'] = positions_df.apply(categorize_asset, axis=1) 
     return positions_df
 
 
@@ -117,7 +118,28 @@ def clean_transactions(transactions_df):
     for col in transactions_numeric_cols:
         if col in transactions_df.columns:
             transactions_df[col] = transactions_df[col].apply(clean_currency)
-        
+    transactions_df['Asset Type'] = transactions_df.apply(categorize_asset, axis=1) 
     # Sort by date
     transactions_df = transactions_df.sort_values('Run Date')
     return transactions_df
+
+def categorize_asset(row):
+    """
+    Categorize asset into Stock, Bond, or Cash/MoneyMarket.
+    """
+    symbol = str(row['Symbol'])
+    desc = str(row.get('Description', '')).upper()
+    
+    # Money Market Funds
+    mmf_symbols = ['FZFXX', 'FDRXX', 'SPAXX', 'QUSBQ'] # QUSBQ is bank sweep
+    if symbol in mmf_symbols or 'MONEY MARKET' in desc or 'CASH RESERVES' in desc or 'FDIC INSURED DEPOSIT' in desc:
+        return 'Cash'
+    
+    # US Treasury Bills/Notes
+    # CUSIPs usually 9 digits, often starting with 912...
+    # Or description contains TREAS BILL
+    if (len(symbol) >= 8 and symbol.startswith('912')) or 'TREAS BILL' in desc or 'TREASURY BILL' in desc:
+        return 'Bond'
+        
+    # Default to Stock/ETF
+    return 'Stock'

@@ -33,9 +33,6 @@ def main():
     # Let's generate the detailed table first (Requirement #3 & #4)
     print("\nCalculating performance for all positions...")
     perf_df = analyze_symbol_performance(positions_df, history_df, latest_date)
-
-    
-    # Fill NaNs for display
     perf_df['IRR'] = perf_df['IRR'].fillna(0.0)
     
     # Requirement #3: Each Account -> Each Stock
