@@ -1,36 +1,37 @@
-from support_functions.display_percentage import display_percentage
-from support_functions.data_loader import load_position, load_transaction
-from support_functions.portfolio import Portfolio,IndividualPortfolio,PensionPortfolio,HSAPortfolio
+from support_functions.data_loader import (
+    load_data
+)
+from support_functions.analysis import (
+    analyze_account_performance,
+    analyze_stock_performance
+)
 
-data_folder_path = "./data"
-transaction_file_pattern = "Accounts_History_*.csv"
-position_file_pattern = "Portfolio_Positions_*.csv"
-
-transactions = load_transaction(data_folder_path, transaction_file_pattern)
-position = load_position(data_folder_path, position_file_pattern)
-portfolio = Portfolio(transactions=transactions, position=position)
-individualPortfolio = IndividualPortfolio(transactions, position)
-pensionPortfolio = PensionPortfolio(transactions, position)
-hsaPortfolio = HSAPortfolio(transactions, position)
+from pathlib import Path
 
 
-result = individualPortfolio.get_account_summary()
-print('Display individual account summary')
-display_percentage(result,['Percentage','IRR'])
+def main():
+    project_path= Path.cwd()
+    data_dir = f'{project_path}/data'
+    positions_df, transactions_df, latest_date = load_data(data_dir)
+    
+    print("\n" + "="*50)
+    print("FIDELITY PORTFOLIO ANALYSIS")
+    print("="*50)
+    
+    # 1. Total Portfolio Performance
+    total_value = positions_df['Current Value'].sum()
+    print(f"\n[1] Total Portfolio Value: ${total_value:,.2f}")
+    
+    # 2. Calculate performance for all positions
+    print("\nCalculating performance for each account...")
+    results = analyze_account_performance(positions_df, transactions_df, latest_date)
+    print(results)
+    
+    # 3. Each Account -> Each Stock
+    print("\nCalculating performance for Account & Symbol...")
+    results = analyze_stock_performance(positions_df, transactions_df, latest_date)
+    print(results)
+    
 
-result = individualPortfolio.get_all_stock_summary()
-print('Display individual account stock summary')
-display_percentage(result,['Percentage','IRR'])
-
-result = individualPortfolio.get_all_bond_summary(showExpiredBond=True)
-print('Display individual account bond summary')
-display_percentage(result,['Percentage','IRR'])
-
-
-result = pensionPortfolio.get_all_stock_summary(colName='Description')
-print('Display 401k account summary')
-display_percentage(result,['Percentage','IRR'])
-
-result = hsaPortfolio.get_all_stock_summary(colName='Description')
-print('Display HSA account summary')
-display_percentage(result,['Percentage','IRR'])
+if __name__ == "__main__":
+    main()
