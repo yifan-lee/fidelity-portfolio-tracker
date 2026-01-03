@@ -96,16 +96,13 @@ def load_transactions(data_dir):
     return transactions_df
     
 def clean_transactions(transactions_df):
-    # remove space in the beginning of column
     for col in transactions_df.columns:
         if (
             (transactions_df[col].dtype == 'object' ) or 
             (transactions_df[col].dtype == 'string')
         ):
-            transactions_df[col] = transactions_df[col].str.strip()   
-    # Standardize dates
+            transactions_df[col] = transactions_df[col].str.strip()
     transactions_df['Run Date'] = pd.to_datetime(transactions_df['Run Date'], errors='coerce')
-    # Sometimes 'Settlement Date' exists
     if 'Settlement Date' in transactions_df.columns:
          transactions_df['Settlement Date'] = pd.to_datetime(transactions_df['Settlement Date'], errors='coerce')
     
