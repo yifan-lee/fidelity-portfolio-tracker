@@ -1,56 +1,21 @@
-# fidelity-portfolio-tracker
+## Portfolio Analysis
 
-<!-- ![Project Logo](https://example.com/logo.png) -->
+To run the project:
 
-- [About](#about)
-- [Usage](#usage)
-- [Code](#code)
-  - [portfolio.py](#portfoliopy)
-  - [data\_loader.py](#data_loaderpy)
-- [Data](#data)
-- [To-do](#to-do)
-
-## About
-
-**fidelity-portfolio-tracker** is used to track the returns of my fidelity protfolio.
-
-## Usage
-
-Run the following code.
+1. Sync dependencies:
 
 ```bash
-python ./code/main.py
+uv sync 
 ```
 
-It will display the distribution of investments and irr of each stock bought in individual account.
+2. Activate venv:
 
-## Code
-
-### portfolio.py
-
-Provide Portfolio class with historical transactions and current position as inputs.
-
-Currently, its main attributes are:
-```python
-# create portfolio object
-current_portfolio = Portfolio(transactions=transactions, position=position)
-# display the distribution of investments in individual account
-current_portfolio.show_investment_distribution()
-# display the irr of each stock bought in individual account
-current_portfolio.show_stock_irr()
+```bash
+source .venv/bin/activate
 ```
 
-### data_loader.py
+3. Install dependencies:
 
-- load_position: load the latest downloaded position from **data** file.
-- load_transaction: load all downloaded transactions from **data** file.
-
-## Data
-
-Transaction and position files downloaded from Fidelity.
-
-## To-do
-
-Analyze irr of other fidelity accounts.
-
-
+```bash
+uv pip install -e . 
+```
