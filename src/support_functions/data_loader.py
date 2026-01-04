@@ -83,15 +83,13 @@ def clean_currency(x):
     return float(x)
 
 
-def load_transactions(data_dir):
+def load_transactions(data_dir, max_cols=14):
     hist_files = glob.glob(os.path.join(data_dir, 'Accounts_History_*.csv'))
     transactions_dfs = []
     print(f"Found {len(hist_files)} history files.")
     
     for f in hist_files:
-        columns = pd.read_csv(f, nrows=0).columns.tolist()
-        columns = columns + [f"Unnamed: {i}" for i in range(len(columns), 15)]
-        df = pd.read_csv(f, names=columns, index_col=False)
+        df = pd.read_csv(f, header=0, usecols=range(max_cols))
         transactions_dfs.append(df)
 
     transactions_df = pd.concat(transactions_dfs, ignore_index=True)
