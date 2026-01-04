@@ -89,7 +89,9 @@ def load_transactions(data_dir):
     print(f"Found {len(hist_files)} history files.")
     
     for f in hist_files:
-        df = pd.read_csv(f, on_bad_lines='skip') 
+        columns = pd.read_csv(f, nrows=0).columns.tolist()
+        columns = columns + [f"Unnamed: {i}" for i in range(len(columns), 15)]
+        df = pd.read_csv(f, names=columns, index_col=False)
         transactions_dfs.append(df)
 
     transactions_df = pd.concat(transactions_dfs, ignore_index=True)

@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def main():
-    project_path= Path.cwd()
+    project_path= Path.cwd().parent
     data_dir = f'{project_path}/data'
     positions_df, transactions_df, latest_date = load_data(data_dir)
     
