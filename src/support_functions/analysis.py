@@ -132,6 +132,15 @@ def filter_positions(positions_df, account_num=None, symbol=None):
 
 
 def build_stock_cash_flows(transactions_df, positions_df, latest_date, account_num, symbol):
+    if account_num == 'Z06872898':
+        cash_flows = []
+        filtered_posi = filter_positions(positions_df, account_num, symbol)
+        initial_date = pd.to_datetime('2022-07-26')
+        current_val = filtered_posi['Current Value'].iloc[0]
+        cash_flows.append((initial_date, -100))
+        cash_flows.append((latest_date, current_val))
+        return cash_flows, current_val
+        
     filtered_hist = filter_transactions(transactions_df, account_num, symbol)
     filtered_posi = filter_positions(positions_df, account_num, symbol)
 
