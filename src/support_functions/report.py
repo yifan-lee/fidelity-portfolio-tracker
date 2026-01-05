@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 
-def generate_markdown_report(total_df, account_df, stock_df, report_date):
+def generate_markdown_report(total_df, account_df, stock_df, report_date, output_dir=None):
     """
     Generates a Markdown formatted report string from the analysis DataFrames.
     """
@@ -36,7 +36,7 @@ def generate_markdown_report(total_df, account_df, stock_df, report_date):
     report.append("\n")
     
     # 3. Position Details
-    report.append("## 3. Position Details (Stocks)")
+    report.append("## 3. Performance by Stocks")
     # Group by Account for better readability?
     # Or just one big table. User previous output was grouped by Account in print loop.
     # A single sorted table is often better for a report, maybe sort by Investment Ratio or Account.
@@ -45,11 +45,20 @@ def generate_markdown_report(total_df, account_df, stock_df, report_date):
     cols_to_show_stock = [
         'Account Name', 'Symbol', 'Current Value', 
         'Total Invested', 'Total Return ($)', 'Total Return (%)', 
-        'IRR'
+        'IRR', 'Investment Ratio'
     ]
     existing_cols_stock = [c for c in cols_to_show_stock if c in stock_df.columns]
     
     report.append(stock_df[existing_cols_stock].to_markdown(index=False, floatfmt=".2f"))
     report.append("\n")
     
-    return "\n".join(report)
+    report_content = "\n".join(report)
+    
+    if output_dir:
+        filename = f"Portfolio_Report_{report_date.strftime('%Y-%m-%d')}.md"
+        output_path = f"{output_dir}/{filename}"
+        with open(output_path, "w") as f:
+            f.write(report_content)
+        print(f"Report saved to: {output_path}")
+        
+    return report_content

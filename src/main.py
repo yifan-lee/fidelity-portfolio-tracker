@@ -13,6 +13,7 @@ from pathlib import Path
 def main():
     project_path= Path.cwd()
     data_dir = f'{project_path}/data'
+    output_dir = f'{project_path}/output'
     positions_df, transactions_df, latest_date = load_data(data_dir)
     
     print("\n" + "="*50)
@@ -31,7 +32,8 @@ def main():
 
     # Generate Report
     from support_functions.report import generate_markdown_report
-    report_str = generate_markdown_report(total_res, account_res, stock_res, latest_date)
+    # Save to project root or a specific reports folder
+    report_str = generate_markdown_report(total_res, account_res, stock_res, latest_date, output_dir=output_dir)
     
     print("\n" + "="*50)
     print(report_str)
