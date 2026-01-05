@@ -20,19 +20,25 @@ def main():
     print("="*50)
     
     # 1. Total Portfolio Performance
-    print("\nCalculating total portfolio performance...")
-    results = analyze_total_performance(positions_df, transactions_df, latest_date)
-    print(results)
+    print("Calculating metrics...")
+    total_res = analyze_total_performance(positions_df, transactions_df, latest_date)
     
     # 2. Calculate performance for all positions
-    print("\nCalculating performance for each account...")
-    results = analyze_account_performance(positions_df, transactions_df, latest_date)
-    print(results)
+    account_res = analyze_account_performance(positions_df, transactions_df, latest_date)
     
-    # 3. Each Account -> Each Stock
-    print("\nCalculating performance for Account & Symbol...")
-    results = analyze_stock_performance(positions_df, transactions_df, latest_date)
-    print(results)
+    # 3. Stock Level
+    stock_res = analyze_stock_performance(positions_df, transactions_df, latest_date)
+
+    # Generate Report
+    from support_functions.report import generate_markdown_report
+    report_str = generate_markdown_report(total_res, account_res, stock_res, latest_date)
+    
+    print("\n" + "="*50)
+    print(report_str)
+    print("="*50 + "\n")
+    
+    # Note: Requirement #4 Asset Class aggregation was removed in previous user edits?
+    # If not, we should re-add it if needed. For now sticking to the 3 DFs user showed.
     
 
 if __name__ == "__main__":

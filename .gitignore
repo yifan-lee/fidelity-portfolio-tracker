@@ -9,4 +9,7 @@
 __pycache__/
 
 ## ignore data file
-data/
+/data/*
+!/data/.gitkeep
+/output/*
+!/output/.gitkeep
