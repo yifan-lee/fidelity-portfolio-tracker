@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def main():
-    project_path= Path.cwd().parent
+    project_path= Path.cwd()
     data_dir = f'{project_path}/data'
     positions_df, transactions_df, latest_date = load_data(data_dir)
     
