@@ -3,7 +3,8 @@ from support_functions.data_loader import (
 )
 from support_functions.analysis import (
     analyze_account_performance,
-    analyze_stock_performance
+    analyze_stock_performance,
+    analyze_total_performance
 )
 
 from pathlib import Path
@@ -19,8 +20,9 @@ def main():
     print("="*50)
     
     # 1. Total Portfolio Performance
-    total_value = positions_df['Current Value'].sum()
-    print(f"\n[1] Total Portfolio Value: ${total_value:,.2f}")
+    print("\nCalculating total portfolio performance...")
+    results = analyze_total_performance(positions_df, transactions_df, latest_date)
+    print(results)
     
     # 2. Calculate performance for all positions
     print("\nCalculating performance for each account...")
