@@ -6,6 +6,7 @@ from support_functions.analysis import (
     analyze_stock_performance,
     analyze_total_performance
 )
+from support_functions.report import generate_markdown_report
 
 from pathlib import Path
 
@@ -31,9 +32,9 @@ def main():
     stock_res = analyze_stock_performance(positions_df, transactions_df, latest_date)
 
     # Generate Report
-    from support_functions.report import generate_markdown_report
-    # Save to project root or a specific reports folder
-    report_str = generate_markdown_report(total_res, account_res, stock_res, latest_date, output_dir=output_dir)
+    output_dir = project_path / 'output'
+    output_dir.mkdir(exist_ok=True)
+    report_str = generate_markdown_report(total_res, account_res, stock_res, latest_date, output_dir=str(output_dir))
     
     print("\n" + "="*50)
     print(report_str)
