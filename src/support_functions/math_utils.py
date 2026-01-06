@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+from pathlib import Path
 from scipy import optimize
 
 
@@ -14,15 +16,22 @@ def calculate_metrics(entity_cash_flows):
     irr_val = xirr(cash_flows)
     total_return_dollar = current_value - total_invested
     roi = total_return_dollar / total_invested if total_invested != 0 else 0
+    weighted_average_holding_period = get_weighted_average_holding_period(cash_flows, latest_date)
     
     return {
         'IRR': irr_val,
         'Total Return ($)': total_return_dollar,
-        'ROI': roi
+        'ROI': roi,
+        'Holding Period (Y)': weighted_average_holding_period
     }
 
-def get_weighted_holding_period(cash_flows, latest_date):
-    dates, amounts = zip(*cash_flows)
+def get_weighted_average_holding_period(cash_flows, latest_date):
+    invested_cash_flows = [flow for flow in cash_flows if flow[1] < 0]
+    dates, amounts = zip(*invested_cash_flows)
+    amounts = pd.Series(amounts)
+    amounts_ratio = amounts/amounts.sum()
+    holding_period = pd.Series([(latest_date - d).days for d in dates])
+    return (amounts_ratio*holding_period).sum()/365.0
     
 
 
@@ -71,6 +80,10 @@ if __name__ == "__main__":
     account = 'Z23390746'
     symbol = 'AAPL'
     entity_cash_flows = build_stock_cash_flows(data, account, symbol)
+    metrics = calculate_metrics(entity_cash_flows)
+    print(metrics)
 
     account = 'Z23390746'
     entity_cash_flows = build_account_cash_flows(data, account)
+    metrics = calculate_metrics(entity_cash_flows)
+    print(metrics)

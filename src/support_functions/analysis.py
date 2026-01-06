@@ -1,7 +1,10 @@
 import pandas as pd
+from pathlib import Path
 
+from support_functions.data_loader import load_data
+from support_functions.flow_builders import build_stock_cash_flows, build_account_cash_flows
+from support_functions.math_utils import calculate_metrics
 
-## Presentation Layer
 
 def analyze_total_performance(positions_df, transactions_df, latest_date):
     accounts_unique = positions_df.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
@@ -33,34 +36,38 @@ def analyze_total_performance(positions_df, transactions_df, latest_date):
     return pd.DataFrame(result)
     
 
-def analyze_account_performance(positions_df, transactions_df, latest_date):
-    """Iterate positions and calculate performance using Unified System (mode='trade')."""
+def analyze_account_performance(data):
+    positions = data.positions
     results = []
     
-    accounts_unique = positions_df.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
+    accounts_unique = positions.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
     
     for _, row in accounts_unique.iterrows():
-        acc_num = row['Account Number']
-        acc_name = row['Account Name']
-        curr_val = row['Current Value']
+        account_name = row['Account Name']
+        account_num = row['Account Number']
+        entity_cash_flows = build_account_cash_flows(data, account_num)
+        metrics = calculate_metrics(entity_cash_flows)
 
-        # if acc_name in ['ERNST & YOUNG 401(K)', 'Cash Management (Individual)']:
-        #     continue
+        current_value = entity_cash_flows.current_value   
+        total_invested = entity_cash_flows.total_invested 
+        total_return = metrics['Total Return ($)']
+        total_return_ratio = metrics['ROI']
+        irr = metrics['IRR']
+        holding_period = metrics['Holding Period (Y)']
         
-        total_invested, irr = analyze_entity_performance(transactions_df, positions_df, latest_date, account_num=acc_num, symbol=None)
-        total_return = curr_val-total_invested
-        total_return_ratio = total_return/total_invested
+        
         
         results.append({
-            'Account Name': acc_name,
-            'Account Number': acc_num,
+            'Account Name': account_name,
+            'Account Number': account_num,
             'Symbol': None,
             'Asset Type': 'Account',
-            'Current Value': curr_val,
+            'Current Value': current_value,
             'Total Invested': total_invested,
             'Total Return ($)': total_return,
             'Total Return (%)': f"{total_return_ratio:.2%}",
-            'IRR': f"{irr:.2%}" if irr is not None else "N/A"
+            'IRR': f"{irr:.2%}" if irr is not None else "N/A",
+            'Holding Period (Y)': f"{holding_period:.2f}"
         })
     results = pd.DataFrame(results)
     ratio = results['Total Invested'] / results['Total Invested'].sum()
@@ -116,22 +123,14 @@ def analyze_stock_performance(positions_df, transactions_df, latest_date):
     results['Investment Ratio'] = ratio.apply(lambda x: f"{x:.2%}")
     return results.sort_values('Total Invested', ascending=False)
 
-            
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-        
-# Example usage block (not executed on import)
 if __name__ == "__main__":
-    pass
+    from support_functions.data_loader import load_data
+    from support_functions.flow_builders import build_stock_cash_flows, build_account_cash_flows
+    from support_functions.math_utils import calculate_metrics
+    
+    project_path= Path.cwd()
+    data_dir = f'{project_path}/data'
+    
+    data = load_data(data_dir)
+    result = analyze_account_performance(data)
+    print(result)

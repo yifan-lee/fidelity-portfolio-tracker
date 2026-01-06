@@ -2,6 +2,7 @@ import datetime
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Tuple
+import pandas as pd
 
 from support_functions.data_loader import load_data
 
@@ -90,7 +91,12 @@ def build_account_cash_flows(data, account_num):
         current_val = filtered_posi['Current Value'].iloc[0]
         cash_flows.append((initial_date, -100))
         cash_flows.append((latest_date, current_val))
-        return cash_flows, 100
+        return EntityCashFlows(
+            cash_flows=cash_flows, 
+            total_invested=100, 
+            current_value=current_val,
+            latest_date=latest_date
+        )
     filtered_hist = filter_account_transactions(transactions_df, account_num)
     filtered_posi = filter_account_positions(positions_df, account_num)
 
@@ -129,6 +135,21 @@ if __name__ == "__main__":
     print(f"Current value of {account} {symbol}: {entity_cash_flows.current_value}")
 
     account = 'Z23390746'
+    entity_cash_flows = build_account_cash_flows(data, account)
+    print(f"Total invested of {account}: {entity_cash_flows.total_invested}")
+    print(f"Current value of {account}: {entity_cash_flows.current_value}")
+
+    account = '241802439'
+    entity_cash_flows = build_account_cash_flows(data, account)
+    print(f"Total invested of {account}: {entity_cash_flows.total_invested}")
+    print(f"Current value of {account}: {entity_cash_flows.current_value}")
+
+    account = '86964'
+    entity_cash_flows = build_account_cash_flows(data, account)
+    print(f"Total invested of {account}: {entity_cash_flows.total_invested}")
+    print(f"Current value of {account}: {entity_cash_flows.current_value}")
+
+    account = 'Z06872898'
     entity_cash_flows = build_account_cash_flows(data, account)
     print(f"Total invested of {account}: {entity_cash_flows.total_invested}")
     print(f"Current value of {account}: {entity_cash_flows.current_value}")
