@@ -1,6 +1,4 @@
 import pandas as pd
-import numpy as np
-from scipy import optimize
 
 
 ## Presentation Layer
@@ -125,140 +123,10 @@ def analyze_stock_performance(positions_df, transactions_df, latest_date):
 
 
 
-## Math Core Layer
-
-def calculate_metrics(cash_flows, current_value, total_invested):
-    irr_val = xirr(cash_flows)
-    total_return_dollar = current_value - total_invested
-    roi = total_return_dollar / total_invested if total_invested != 0 else 0
-    
-    return {
-        'IRR': irr_val,
-        'Total Return ($)': total_return_dollar,
-        'ROI': roi
-    }
 
 
-def xirr(cash_flows):
-    """
-    Calculate Internal Rate of Return (XIRR).
-    cash_flows: List of (date, amount) tuples.
-    """
-    if not cash_flows or len(cash_flows) < 2:
-        return None
-        
-    dates, amounts = width = zip(*cash_flows)
-    
-    # Convert dates to days from start
-    min_date = min(dates)
-    days = [(d - min_date).days for d in dates]
-    
-    # Optimization function
-    def npv(r):
-        arr = np.array(days)
-        vals = np.array(amounts)
-        return np.sum(vals / (1 + r)**(arr / 365.0))
-        
-    # Check signs
-    pos = any(a > 0 for a in amounts)
-    neg = any(a < 0 for a in amounts)
-    if not (pos and neg):
-        return None # Can't calculate IRR without both inflows and outflows
-        
-    try:
-        res = optimize.newton(npv, 0.1, maxiter=50) # start guess at 10%
-        return res
-    except RuntimeError:
-        return None
 
 
-## Business Logic Layer
-
-
-def filter_stock_transactions(transactions_df, account_num, symbol):
-    df = transactions_df.copy()
-    df = df[
-        (df['Account Number'] == account_num) &
-        (df['Symbol'] == symbol)
-    ]
-    return df
-    
-def filter_account_transactions(transactions_df, account_num):
-    df = transactions_df.copy()
-    funding_patterns = [
-        'ELECTRONIC FUNDS TRANSFER', 'CHECK RECEIVED', 'DEPOSIT', 'WIRE', 
-        'BILL PAY', 'CONTRIB', 'PARTIC CONTR'
-    ]
-    mask_account = (df['Account Number'] == account_num)
-    mask_pattern = df['Action'].str.upper().apply(lambda x: any(p in str(x) for p in funding_patterns))
-    
-    df = df[mask_account & mask_pattern]
-    return df
-
-def filter_stock_positions(positions_df, account_num, symbol):
-    df = positions_df.copy()
-    df = df[
-        (df['Account Number'] == account_num) &
-        (df['Symbol'] == symbol)
-    ]
-    return df
-
-def filter_account_positions(positions_df, account_num):
-    df = positions_df.copy()
-    df = df[df['Account Number'] == account_num]
-    return df
-
-
-def build_stock_cash_flows(transactions_df, positions_df, latest_date, account_num, symbol):
-        
-    filtered_hist = filter_stock_transactions(transactions_df, account_num, symbol)
-    filtered_posi = filter_stock_positions(positions_df, account_num, symbol)
-
-    cash_flows = []
-    total_invested = 0.0
-    current_val = filtered_posi['Current Value'].iloc[0]
-    for _, row in filtered_hist.iterrows():
-        date = row['Run Date']
-        amount = row['Amount ($)']
-        flow = amount
-        cash_flows.append((date, flow))
-        
-        # Track Invested Capital (Sum of negative flows)
-        if flow < 0:
-            total_invested += abs(flow)
-
-    cash_flows.append((latest_date, current_val))
-    return cash_flows, total_invested, current_val
-    
-    
-def build_account_cash_flows(transactions_df, positions_df, latest_date, account_num):
-    symbol = None
-    if account_num == 'Z06872898':
-        cash_flows = []
-        filtered_posi = filter_account_positions(positions_df, account_num, symbol)
-        initial_date = pd.to_datetime('2022-07-26')
-        current_val = filtered_posi['Current Value'].iloc[0]
-        cash_flows.append((initial_date, -100))
-        cash_flows.append((latest_date, current_val))
-        return cash_flows, 100
-    filtered_hist = filter_account_transactions(transactions_df, account_num)
-    filtered_posi = filter_account_positions(positions_df, account_num)
-
-    cash_flows = []
-    total_invested = 0.0
-    current_val = filtered_posi['Current Value'].sum()
-    for _, row in filtered_hist.iterrows():
-        date = row['Run Date']
-        amount = row['Amount ($)']
-        flow = -amount
-        cash_flows.append((date, flow))
-        
-        # Track Invested Capital (Sum of negative flows)
-        total_invested -= (flow)
-
-    cash_flows.append((latest_date, current_val))
-    return cash_flows, total_invested, current_val
-    
 
 
 

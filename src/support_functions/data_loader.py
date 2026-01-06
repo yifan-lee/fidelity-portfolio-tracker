@@ -1,6 +1,7 @@
 from datetime import datetime
 import glob
 import os
+from pathlib import Path
 import pandas as pd
 from dataclasses import dataclass
 
@@ -145,3 +146,12 @@ def categorize_asset(row):
         
     # Default to Stock/ETF
     return 'Stock'
+
+
+if __name__ == "__main__":
+    project_path= Path.cwd()
+    data_dir = f'{project_path}/data'
+    output_dir = f'{project_path}/output'
+
+    data = load_data(data_dir)
+    print(data.positions.head())

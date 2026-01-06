@@ -6,7 +6,7 @@ from support_functions.analysis import (
     analyze_stock_performance,
     analyze_total_performance
 )
-from support_functions.report import generate_markdown_report
+from support_functions.report_generator import generate_markdown_report
 
 from pathlib import Path
 
