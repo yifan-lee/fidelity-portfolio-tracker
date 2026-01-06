@@ -2,8 +2,13 @@ from datetime import datetime
 import glob
 import os
 import pandas as pd
+from dataclasses import dataclass
 
-
+@dataclass
+class PortfolioData:
+    positions: pd.DataFrame
+    transactions: pd.DataFrame
+    latest_date: pd.Timestamp
 
 
 def load_data(data_dir):
@@ -23,7 +28,7 @@ def load_data(data_dir):
     
     transactions_df = clean_transactions(transactions_df)
     
-    return positions_df, transactions_df, pos_date
+    return PortfolioData(positions_df, transactions_df, pos_date)
 
 
 def get_latest_position_file(data_dir):

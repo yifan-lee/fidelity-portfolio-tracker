@@ -3,6 +3,8 @@ import numpy as np
 from scipy import optimize
 
 
+## Presentation Layer
+
 def analyze_total_performance(positions_df, transactions_df, latest_date):
     accounts_unique = positions_df.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
     total_cash_flows = []
@@ -11,7 +13,7 @@ def analyze_total_performance(positions_df, transactions_df, latest_date):
     for _, row in accounts_unique.iterrows():
         acc_num = row['Account Number']
         curr_val = row['Current Value']
-        cash_flows, curr_invested = build_account_cash_flows(transactions_df, positions_df, latest_date, acc_num)
+        cash_flows, curr_invested, curr_val = build_account_cash_flows(transactions_df, positions_df, latest_date, acc_num)
         total_val += curr_val
         total_invested += curr_invested
         total_cash_flows.extend(cash_flows)
@@ -121,102 +123,20 @@ def analyze_stock_performance(positions_df, transactions_df, latest_date):
 
         
 
-def analyze_entity_performance(transactions_df, positions_df, latest_date, account_num=None, symbol=None):
-    """
-    Generic Entry Point for analyzing an entity (Account or Symbol).
-    """
-    if symbol:
-        cash_flows, total_invested = build_stock_cash_flows(transactions_df, positions_df, latest_date, account_num,symbol)
-    else:
-        cash_flows, total_invested = build_account_cash_flows(transactions_df, positions_df, latest_date, account_num)
+
+
+## Math Core Layer
+
+def calculate_metrics(cash_flows, current_value, total_invested):
+    irr_val = xirr(cash_flows)
+    total_return_dollar = current_value - total_invested
+    roi = total_return_dollar / total_invested if total_invested != 0 else 0
     
-    irr = xirr(cash_flows)
-    
-    # 3. Calculate Metrics
-    return total_invested, irr
-
-def filter_transactions(transactions_df, account_num=None, symbol=None):
-    """Filter transactions by Account and/or Symbol."""
-    df = transactions_df.copy()
-    if symbol:
-        df = df[
-            (df['Account Number'] == account_num) &
-            (df['Symbol'] == symbol)
-        ]
-    else:
-        funding_patterns = [
-            'ELECTRONIC FUNDS TRANSFER', 'CHECK RECEIVED', 'DEPOSIT', 'WIRE', 
-            'BILL PAY', 'CONTRIB', 'PARTIC CONTR'
-        ]
-        mask_account = (df['Account Number'] == account_num)
-        mask_pattern = df['Action'].str.upper().apply(lambda x: any(p in str(x) for p in funding_patterns))
-        
-        df = df[mask_account & mask_pattern]
-    return df
-
-def filter_positions(positions_df, account_num=None, symbol=None):
-    """Filter positions by Account and/or Symbol."""
-    df = positions_df.copy()
-    if symbol:
-        df = df[
-            (df['Account Number'] == account_num) &
-            (df['Symbol'] == symbol)
-        ]
-    else:
-        df = df[df['Account Number'] == account_num]
-    return df
-
-
-def build_stock_cash_flows(transactions_df, positions_df, latest_date, account_num, symbol):
-        
-    filtered_hist = filter_transactions(transactions_df, account_num, symbol)
-    filtered_posi = filter_positions(positions_df, account_num, symbol)
-
-    cash_flows = []
-    total_invested = 0.0
-    current_val = filtered_posi['Current Value'].iloc[0]
-    for _, row in filtered_hist.iterrows():
-        date = row['Run Date']
-        amount = row['Amount ($)']
-        flow = amount
-        cash_flows.append((date, flow))
-        
-        # Track Invested Capital (Sum of negative flows)
-        if flow < 0:
-            total_invested += abs(flow)
-
-    cash_flows.append((latest_date, current_val))
-    return cash_flows, total_invested
-    
-    
-def build_account_cash_flows(transactions_df, positions_df, latest_date, account_num):
-    symbol = None
-    if account_num == 'Z06872898':
-        cash_flows = []
-        filtered_posi = filter_positions(positions_df, account_num, symbol)
-        initial_date = pd.to_datetime('2022-07-26')
-        current_val = filtered_posi['Current Value'].iloc[0]
-        cash_flows.append((initial_date, -100))
-        cash_flows.append((latest_date, current_val))
-        return cash_flows, 100
-    filtered_hist = filter_transactions(transactions_df, account_num, symbol)
-    filtered_posi = filter_positions(positions_df, account_num, symbol)
-
-    cash_flows = []
-    total_invested = 0.0
-    current_val = filtered_posi['Current Value'].sum()
-    for _, row in filtered_hist.iterrows():
-        date = row['Run Date']
-        amount = row['Amount ($)']
-        flow = -amount
-        cash_flows.append((date, flow))
-        
-        # Track Invested Capital (Sum of negative flows)
-        total_invested -= (flow)
-
-    cash_flows.append((latest_date, current_val))
-    return cash_flows, total_invested
-    
+    return {
+        'IRR': irr_val,
+        'Total Return ($)': total_return_dollar,
+        'ROI': roi
+    }
 
 
 def xirr(cash_flows):
@@ -252,78 +172,97 @@ def xirr(cash_flows):
         return None
 
 
-# # --- Unified Analysis System ---
+## Business Logic Layer
 
 
-
-# def identify_funding_flow(row):
-#     """
-#     For Account Analysis:
-#     Identify if row is a funding event (Deposit/Withdrawal).
-#     Returns (is_funding, flow_amount)
-#     Flow convention: Deposit is Investment (Negative Flow), Withdrawal is Return (Positive Flow).
-#     Since Fidelity Deposit is (+), we return -1 * Amount.
-#     """
-#     action = str(row['Action']).upper()
-#     amount = row['Amount ($)']
+def filter_stock_transactions(transactions_df, account_num, symbol):
+    df = transactions_df.copy()
+    df = df[
+        (df['Account Number'] == account_num) &
+        (df['Symbol'] == symbol)
+    ]
+    return df
     
-#     if pd.isna(amount) or amount == 0:
-#         return False, 0.0
-
-#     funding_patterns = ['ELECTRONIC FUNDS TRANSFER', 'CHECK RECEIVED', 'DEPOSIT', 'WIRE', 'BILL PAY', 'CONTRIB', 'PARTIC CONTR']
-#     exclude_patterns = ['DIVIDEND', 'INTEREST', 'REINVESTMENT', 'YOU BOUGHT', 'YOU SOLD', 'REDEMPTION', 'FEE', 'EXCHANGE', 'MARKET', 'CASH RESERVES', 'GAIN', 'LOSS']
+def filter_account_transactions(transactions_df, account_num):
+    df = transactions_df.copy()
+    funding_patterns = [
+        'ELECTRONIC FUNDS TRANSFER', 'CHECK RECEIVED', 'DEPOSIT', 'WIRE', 
+        'BILL PAY', 'CONTRIB', 'PARTIC CONTR'
+    ]
+    mask_account = (df['Account Number'] == account_num)
+    mask_pattern = df['Action'].str.upper().apply(lambda x: any(p in str(x) for p in funding_patterns))
     
-#     is_funding = False
-#     if any(p in action for p in funding_patterns):
-#         is_funding = True
-#     if any(p in action for p in exclude_patterns):
-#         is_funding = False
+    df = df[mask_account & mask_pattern]
+    return df
+
+def filter_stock_positions(positions_df, account_num, symbol):
+    df = positions_df.copy()
+    df = df[
+        (df['Account Number'] == account_num) &
+        (df['Symbol'] == symbol)
+    ]
+    return df
+
+def filter_account_positions(positions_df, account_num):
+    df = positions_df.copy()
+    df = df[df['Account Number'] == account_num]
+    return df
+
+
+def build_stock_cash_flows(transactions_df, positions_df, latest_date, account_num, symbol):
         
-#     if is_funding:
-#         return True, -1 * amount
-#     return False, 0.0
+    filtered_hist = filter_stock_transactions(transactions_df, account_num, symbol)
+    filtered_posi = filter_stock_positions(positions_df, account_num, symbol)
 
-
-
-# def calculate_metrics(cash_flows, current_value, latest_date, total_invested_basis):
-#     """
-#     Calculate generic metrics: IRR, Total Return $, ROI %.
-#     """
-#     # Append terminal value
-#     final_flows = cash_flows.copy()
-#     if current_value > 0:
-#         final_flows.append((latest_date, current_value))
+    cash_flows = []
+    total_invested = 0.0
+    current_val = filtered_posi['Current Value'].iloc[0]
+    for _, row in filtered_hist.iterrows():
+        date = row['Run Date']
+        amount = row['Amount ($)']
+        flow = amount
+        cash_flows.append((date, flow))
         
-#     irr_val = xirr(final_flows)
+        # Track Invested Capital (Sum of negative flows)
+        if flow < 0:
+            total_invested += abs(flow)
+
+    cash_flows.append((latest_date, current_val))
+    return cash_flows, total_invested, current_val
     
-#     # Total Return $ = (Sum of Flows + Current Value)
-#     # Note: Flows includes the initial negative investments.
-#     # So Sum(Flows) is Net Realized PnL.
-#     # Adding Current Value gives Total PnL.
-#     # Wait, simple check: Invest -100. Current 110. Sum Flows = -100. Total PnL = -100 + 110 = 10. Correct.
-#     total_return_dollar = sum([f for _, f in cash_flows]) + current_value
     
-#     # ROI
-#     roi = (total_return_dollar / total_invested_basis) if total_invested_basis > 0 else 0.0
+def build_account_cash_flows(transactions_df, positions_df, latest_date, account_num):
+    symbol = None
+    if account_num == 'Z06872898':
+        cash_flows = []
+        filtered_posi = filter_account_positions(positions_df, account_num, symbol)
+        initial_date = pd.to_datetime('2022-07-26')
+        current_val = filtered_posi['Current Value'].iloc[0]
+        cash_flows.append((initial_date, -100))
+        cash_flows.append((latest_date, current_val))
+        return cash_flows, 100
+    filtered_hist = filter_account_transactions(transactions_df, account_num)
+    filtered_posi = filter_account_positions(positions_df, account_num)
+
+    cash_flows = []
+    total_invested = 0.0
+    current_val = filtered_posi['Current Value'].sum()
+    for _, row in filtered_hist.iterrows():
+        date = row['Run Date']
+        amount = row['Amount ($)']
+        flow = -amount
+        cash_flows.append((date, flow))
+        
+        # Track Invested Capital (Sum of negative flows)
+        total_invested -= (flow)
+
+    cash_flows.append((latest_date, current_val))
+    return cash_flows, total_invested, current_val
     
-#     return {
-#         'Total Invested': total_invested_basis,
-#         'Total Return ($)': total_return_dollar,
-#         'ROI': roi,
-#         'IRR': irr_val if irr_val is not None else 0.0
-#     }
-
-
-# --- Wrappers for backward compatibility / convenience ---
 
 
 
-# def analyze_account_performance(history_df, account_num, latest_date, current_account_value):
-#     """Analyze account using Unified System (mode='funding')."""
-#     return analyze_entity_performance(
-#         history_df, latest_date, current_account_value, 
-#         account_num=account_num, mode='funding'
-#     )
+
         
 # Example usage block (not executed on import)
 if __name__ == "__main__":
