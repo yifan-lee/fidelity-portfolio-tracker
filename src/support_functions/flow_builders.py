@@ -9,10 +9,10 @@ from support_functions.data_loader import load_data
 
 @dataclass
 class EntityCashFlows:
-    cash_flows: List[Tuple[datetime.datetime, float]]
-    total_invested: float
-    current_value: float
-    latest_date: datetime.datetime
+    cash_flows: List[Tuple[datetime.datetime, float]] = None
+    total_invested: float = None
+    current_value: float = None
+    latest_date: datetime.datetime = None
 
 
 def filter_stock_transactions(transactions_df, account_num, symbol):

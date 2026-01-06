@@ -3,14 +3,22 @@ import glob
 import os
 from pathlib import Path
 import pandas as pd
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class PortfolioData:
     positions: pd.DataFrame
     transactions: pd.DataFrame
     latest_date: pd.Timestamp
+    unique_accounts: pd.DataFrame = field(init=False)
 
+    def __post_init__(self):
+        if self.positions is not None:
+            self.unique_accounts = (
+                self.positions[['Account Number', 'Account Name']]
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
 
 def load_data(data_dir):
     """
