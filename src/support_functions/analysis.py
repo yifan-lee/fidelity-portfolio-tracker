@@ -2,51 +2,52 @@ import pandas as pd
 from pathlib import Path
 
 from support_functions.data_loader import load_data
-from support_functions.flow_builders import build_stock_cash_flows, build_account_cash_flows
+from support_functions.flow_builders import (
+    build_stock_cash_flows, build_account_cash_flows, EntityCashFlows
+)
 from support_functions.math_utils import calculate_metrics
 
 
 def analyze_total_performance(data):
-    positions = data.positions
     latest_date = data.latest_date
+    unique_accounts = data.unique_accounts
     total_cash_flows = EntityCashFlows(latest_date=latest_date)
 
-    accounts_unique = positions.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
-    for _, row in accounts_unique.iterrows():
+    for _, row in unique_accounts.iterrows():
         account_num = row['Account Number']
         entity_cash_flows = build_account_cash_flows(data, account_num)
-        total_invested = entity_cash_flows.total_invested
-        current_value = entity_cash_flows.current_value
-        cash_flows = entity_cash_flows.cash_flows
+        total_cash_flows.cash_flows.extend(entity_cash_flows.cash_flows)
+        total_cash_flows.total_invested += entity_cash_flows.total_invested
+        total_cash_flows.current_value += entity_cash_flows.current_value
 
-        total_val += current_value
-        total_invested += total_invested
-        total_cash_flows.extend(cash_flows)
-    irr = xirr(total_cash_flows)
-    total_return = total_val-total_invested
-    total_return_ratio = total_return/total_invested
+    metrics = calculate_metrics(total_cash_flows)
+    current_value = total_cash_flows.current_value   
+    total_invested = total_cash_flows.total_invested 
+    total_return = metrics['Total Return ($)']
+    total_return_ratio = metrics['ROI']
+    irr = metrics['IRR']
+    holding_period = metrics['Holding Period (Y)']
     result = [{
         'Account Name': None,
         'Account Number': None,
         'Symbol': None,
         'Asset Type': 'All',
-        'Current Value': total_val,
+        'Current Value': current_value,
         'Total Invested': total_invested,
         'Total Return ($)': total_return,
         'Total Return (%)': f"{total_return_ratio:.2%}",
         'IRR': f"{irr:.2%}" if irr is not None else "N/A",
-        'Investment Ratio': "100%"
+        'Investment Ratio': "100%",
+        'Holding Period (Y)': f"{holding_period:.2f}"
     }]
     return pd.DataFrame(result)
     
 
 def analyze_account_performance(data):
-    positions = data.positions
+    unique_accounts = data.unique_accounts
     results = []
     
-    accounts_unique = positions.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
-    
-    for _, row in accounts_unique.iterrows():
+    for _, row in unique_accounts.iterrows():
         account_name = row['Account Name']
         account_num = row['Account Number']
         entity_cash_flows = build_account_cash_flows(data, account_num)
@@ -82,9 +83,9 @@ def analyze_stock_performance(data):
     results = []
 
     positions = data.positions
-    accounts_unique = positions.groupby(['Account Number','Account Name'])['Current Value'].sum().reset_index()
+    unique_accounts = data.unique_accounts
 
-    for _, row in accounts_unique.iterrows():
+    for _, row in unique_accounts.iterrows():
         
         account_name = row['Account Name']
         account_num = row['Account Number']
@@ -142,4 +143,7 @@ if __name__ == "__main__":
     print(result)
 
     result = analyze_stock_performance(data)
+    print(result)
+
+    result = analyze_total_performance(data)
     print(result)

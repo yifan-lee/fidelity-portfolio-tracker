@@ -15,7 +15,7 @@ def main():
     project_path= Path.cwd()
     data_dir = f'{project_path}/data'
     output_dir = f'{project_path}/output'
-    positions_df, transactions_df, latest_date = load_data(data_dir)
+    data = load_data(data_dir)
     
     print("\n" + "="*50)
     print("FIDELITY PORTFOLIO ANALYSIS")
@@ -23,18 +23,18 @@ def main():
     
     # 1. Total Portfolio Performance
     print("Calculating metrics...")
-    total_res = analyze_total_performance(positions_df, transactions_df, latest_date)
+    total_res = analyze_total_performance(data)
     
     # 2. Calculate performance for all positions
-    account_res = analyze_account_performance(positions_df, transactions_df, latest_date)
+    account_res = analyze_account_performance(data)
     
     # 3. Stock Level
-    stock_res = analyze_stock_performance(positions_df, transactions_df, latest_date)
+    stock_res = analyze_stock_performance(data)
 
     # Generate Report
     output_dir = project_path / 'output'
     output_dir.mkdir(exist_ok=True)
-    report_str = generate_markdown_report(total_res, account_res, stock_res, latest_date, output_dir=str(output_dir))
+    report_str = generate_markdown_report(total_res, account_res, stock_res, data.latest_date, output_dir=str(output_dir))
     
     print("\n" + "="*50)
     print(report_str)

@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Tuple
 import pandas as pd
 
@@ -9,9 +9,9 @@ from support_functions.data_loader import load_data
 
 @dataclass
 class EntityCashFlows:
-    cash_flows: List[Tuple[datetime.datetime, float]] = None
-    total_invested: float = None
-    current_value: float = None
+    cash_flows: List[Tuple[datetime.datetime, float]] = field(default_factory=list)
+    total_invested: float = 0
+    current_value: float = 0
     latest_date: datetime.datetime = None
 
 
