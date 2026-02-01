@@ -1,7 +1,10 @@
+from inspect import BoundArguments
 import pandas as pd
 from support_functions.data_loader import load_data
 from support_functions.flow_builders import (
-    build_entity_cash_flows, EntityCashFlows
+    EntityCashFlows,
+    build_entity_cash_flows, 
+    build_asset_class_cash_flows
 )
 from support_functions.math_utils import calculate_metrics
 
@@ -9,6 +12,112 @@ class PortfolioAnalyzer:
     def __init__(self, data_dir, output_dir=None):
         self.data = load_data(data_dir)
         self.output_dir = output_dir
+
+    def analyze_entity_in_account(
+        self, 
+        account_num: str, 
+        entity_name: str
+    ):
+        entity_cash_flows = build_entity_cash_flows(self.data, account_num, entity_name)
+        metrics = calculate_metrics(entity_cash_flows)
+        account_name = self.data.account_map.get(account_num, "Unknown")
+
+        result = pd.Series({
+            'Account Number': account_num,
+            'Account Name': account_name,
+            'Entity Name': entity_name,
+            'Total Invested': entity_cash_flows.total_invested,
+            'Current Basis': entity_cash_flows.current_basis,
+            'Current Value': entity_cash_flows.current_value,
+            'Total PnL': metrics['Total PnL'],
+            'IRR (%)': f"{metrics['IRR']:.2%}" if metrics['IRR'] is not None else "N/A",
+            'Total Return (%)': f"{metrics['ROI']:.2%}",
+            'Holding Period (Y)': f"{metrics['Holding Period (Y)']:.2f}"
+        })
+        return result
+
+    def analyze_all_entities_in_account(
+        self,
+        account_num: str
+    ):
+        results = []
+        sub_transactions = self.data.transactions[self.data.transactions['Account Number'] == account_num]
+        entity_name_list = sub_transactions['Symbol'].unique()
+        entity_name_list = entity_name_list[entity_name_list != '']
+        for entity_name in entity_name_list:
+            result = self.analyze_entity_in_account(account_num, entity_name)
+            results.append(result)
+        results = pd.DataFrame(results)
+        if not results.empty and 'Current Value' in results.columns:
+            ratio = results['Current Value'] / results['Current Value'].sum()
+            results['Investment Ratio'] = ratio.apply(lambda x: f"{x:.2%}")
+            return results.sort_values('Current Value', ascending=False)
+        return results
+
+
+    def analyze_account_by_asset_class(
+        self,
+        account_num: str
+    ):
+        results = []
+        account_name = self.data.account_map.get(account_num, "Unknown")
+        funding_cash_flows = build_asset_class_cash_flows(self.data, account_num, 'Transfer')
+        total_funding = sum(amount for date, amount in funding_cash_flows.cash_flows)
+        
+        for asset_class in ["Stock", "Bond"]:
+            asset_class_cash_flows = build_asset_class_cash_flows(self.data, account_num, asset_class)
+            metrics = calculate_metrics(asset_class_cash_flows)
+            results.append(pd.Series({
+                'Account Number': account_num,
+                'Account Name': account_name,
+                'Asset Class': asset_class,
+                'Total Invested': asset_class_cash_flows.total_invested,
+                'Current Basis': asset_class_cash_flows.current_basis,
+                'Current Value': asset_class_cash_flows.current_value,
+                'Total PnL': metrics['Total PnL'],
+                'IRR (%)': f"{metrics['IRR']:.2%}" if metrics['IRR'] is not None else "N/A",
+                'Total Return (%)': f"{metrics['ROI']:.2%}",
+                'Holding Period (Y)': f"{metrics['Holding Period (Y)']:.2f}"
+            }))
+            total_funding = total_funding - asset_class_cash_flows.current_basis
+        
+        cash_cash_flows = build_asset_class_cash_flows(self.data, account_num, 'Cash')
+        results.append(pd.Series({
+            'Account Number': account_num,
+            'Account Name': account_name,
+            'Asset Class': "Cash",
+            'Total Invested': cash_cash_flows.total_invested,
+            'Current Basis': total_funding,
+            'Current Value': cash_cash_flows.current_value,
+            'Total PnL': None,
+            'IRR (%)': None,
+            'Total Return (%)': None,
+            'Holding Period (Y)': None
+        }))
+        results = pd.DataFrame(results)
+        if not results.empty and 'Current Value' in results.columns:
+            ratio = results['Current Value'] / results['Current Value'].sum()
+            results['Investment Ratio'] = ratio.apply(lambda x: f"{x:.2%}")
+            return results.sort_values('Current Value', ascending=False)
+        return results
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def analyze_portfolio_total(self):
         """1. Analyze overall portfolio performance."""
@@ -145,83 +254,49 @@ class PortfolioAnalyzer:
             return results.sort_values('Total Invested', ascending=False)
         return results
 
-    def analyze_individual_account_holdings(self):
-        """4. Analyze performance for every individual holding."""
-        results = []
-        positions = self.data.positions
-        unique_accounts = self.data.unique_accounts
+    # def analyze_individual_account_holdings(self):
+    #     """4. Analyze performance for every individual holding."""
+    #     results = []
+    #     positions = self.data.positions
+    #     unique_accounts = self.data.unique_accounts
 
-        for _, row in unique_accounts.iterrows():
-            account_name = row['Account Name']
-            account_num = row['Account Number']
+    #     for _, row in unique_accounts.iterrows():
+    #         account_name = row['Account Name']
+    #         account_num = row['Account Number']
 
-            if account_name in self.excluded_accounts:
-                continue
+    #         if account_name in self.excluded_accounts:
+    #             continue
             
-            # Get all positions for this account (Stock, Bond, etc.)
-            sub_positions = positions[positions['Account Name'] == account_name]
+    #         # Get all positions for this account (Stock, Bond, etc.)
+    #         sub_positions = positions[positions['Account Name'] == account_name]
 
-            for _, sub_row in sub_positions.iterrows():
-                symbol = sub_row['Symbol']
-                asset_type = sub_row['Asset Type']
-                if symbol in ['Pending activity']:
-                    continue
+    #         for _, sub_row in sub_positions.iterrows():
+    #             symbol = sub_row['Symbol']
+    #             asset_type = sub_row['Asset Type']
+    #             if symbol in ['Pending activity']:
+    #                 continue
             
-                entity_cash_flows = build_stock_cash_flows(self.data, account_num=account_num, symbol=symbol)
-                metrics = calculate_metrics(entity_cash_flows)
+    #             entity_cash_flows = build_stock_cash_flows(self.data, account_num=account_num, symbol=symbol)
+    #             metrics = calculate_metrics(entity_cash_flows)
                     
-                results.append({
-                    'Account Name': account_name,
-                    'Symbol': symbol,
-                    'Asset Type': asset_type,
-                    'Current Value': entity_cash_flows.current_value,
-                    'Total Invested': entity_cash_flows.total_invested,
-                    'Total Return ($)': metrics['Total Return ($)'],
-                    'Total Return (%)': f"{metrics['ROI']:.2%}",
-                    'IRR': f"{metrics['IRR']:.2%}" if metrics['IRR'] is not None else "N/A",
-                    'Holding Period (Y)': f"{metrics['Holding Period (Y)']:.2f}"
-                })
+    #             results.append({
+    #                 'Account Name': account_name,
+    #                 'Symbol': symbol,
+    #                 'Asset Type': asset_type,
+    #                 'Current Value': entity_cash_flows.current_value,
+    #                 'Total Invested': entity_cash_flows.total_invested,
+    #                 'Total Return ($)': metrics['Total Return ($)'],
+    #                 'Total Return (%)': f"{metrics['ROI']:.2%}",
+    #                 'IRR': f"{metrics['IRR']:.2%}" if metrics['IRR'] is not None else "N/A",
+    #                 'Holding Period (Y)': f"{metrics['Holding Period (Y)']:.2f}"
+    #             })
         
-        results = pd.DataFrame(results)
-        if not results.empty and 'Total Invested' in results.columns:
-            # Sort by total invested
-            return results.sort_values('Total Invested', ascending=False)
-        return results
+    #     results = pd.DataFrame(results)
+    #     if not results.empty and 'Total Invested' in results.columns:
+    #         # Sort by total invested
+    #         return results.sort_values('Total Invested', ascending=False)
+    #     return results
 
 
 
-    def analyze_entity_in_account(
-        self, 
-        account_num: str, 
-        entity_name: str
-    ):
-        entity_cash_flows = build_entity_cash_flows(self.data, account_num, entity_name)
-        metrics = calculate_metrics(entity_cash_flows)
-        account_name = self.data.account_map.get(account_num, "Unknown")
 
-        result = pd.Series({
-            'Account Number': account_num,
-            'Account Name': account_name,
-            'Entity Name': entity_name,
-            'Total Invested': entity_cash_flows.total_invested,
-            'Current Basis': entity_cash_flows.current_basis,
-            'Current Value': entity_cash_flows.current_value,
-            'Total PnL': metrics['Total PnL'],
-            'IRR (%)': f"{metrics['IRR']:.2%}" if metrics['IRR'] is not None else "N/A",
-            'Total Return (%)': f"{metrics['ROI']:.2%}",
-            'Holding Period (Y)': f"{metrics['Holding Period (Y)']:.2f}"
-        })
-        return result
-
-    def analyze_all_entities_in_account(
-        self,
-        account_num: str
-    ):
-        pass
-
-    def analyze_account_by_asset_class(
-        self,
-        account_num: str
-    ):
-        pass
-        

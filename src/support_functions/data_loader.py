@@ -149,7 +149,7 @@ def clean_transactions(transactions_df):
     transactions_df.loc[transactions_df['Account Number'] == "86964", 'Amount ($)'] *= -1
 
     # 使用 fillna 确保不匹配的行不会被覆盖为 NaN
-    transactions_df['Symbol'] = transactions_df['Description'].map(symbol_map).fillna(transactions_df.get('Symbol', None))
+    transactions_df.loc[:, 'Symbol'] = transactions_df['Description'].map(symbol_map).fillna(transactions_df.get('Symbol', pd.NA))
     
     # Sort by date
     transactions_df = transactions_df.sort_values('Run Date')
@@ -161,6 +161,7 @@ def categorize_asset(row):
     """
     symbol = str(row['Symbol'])
     desc = str(row.get('Description', '')).upper()
+    action = str(row.get('Action', ''))
     
     # Money Market Funds
     mmf_symbols = ['FZFXX', 'FDRXX', 'SPAXX', 'QUSBQ'] # QUSBQ is bank sweep
@@ -172,7 +173,10 @@ def categorize_asset(row):
     # Or description contains TREAS BILL
     if (len(symbol) >= 8 and symbol.startswith('912')) or 'TREAS BILL' in desc or 'TREASURY BILL' in desc:
         return 'Bond'
-        
+
+    if action == 'Electronic Funds Transfer Received (Cash)':
+        return 'Transfer'
+    
     # Default to Stock/ETF
     return 'Stock'
 

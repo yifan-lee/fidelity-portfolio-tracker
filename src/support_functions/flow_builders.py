@@ -33,20 +33,9 @@ def filter_entity_positions(positions_df, account_num, entity_name):
     ]
     return df
     
-
-
-def build_entity_cash_flows(data, account_num, entity_name):
-    transactions_df = data.transactions
-    positions_df = data.positions
-    latest_date = data.latest_date
-    
-    filtered_hist = filter_entity_transactions(transactions_df, account_num, entity_name)
-    filtered_posi = filter_entity_positions(positions_df, account_num, entity_name)
-
+def build_cash_flow(filtered_hist):
     cash_flows = []
     total_invested = 0.0
-    current_val = filtered_posi['Current Value'].iloc[0] if not filtered_posi.empty else 0.0
-    current_basis = filtered_posi['Cost Basis Total'].iloc[0] if not filtered_posi.empty else 0.0
     for _, row in filtered_hist.iterrows():
         date = row['Run Date']
         amount = row['Amount ($)']
@@ -55,6 +44,19 @@ def build_entity_cash_flows(data, account_num, entity_name):
         
         if flow < 0:
             total_invested += abs(flow)
+    return cash_flows, total_invested
+
+def build_entity_cash_flows(data, account_num, entity_name):
+    transactions_df = data.transactions
+    positions_df = data.positions
+    latest_date = data.latest_date
+    
+    filtered_hist = filter_entity_transactions(transactions_df, account_num, entity_name)
+    filtered_posi = filter_entity_positions(positions_df, account_num, entity_name)
+    
+    cash_flows, total_invested = build_cash_flow(filtered_hist)
+    current_val = filtered_posi['Current Value'].iloc[0] if not filtered_posi.empty else 0.0
+    current_basis = filtered_posi['Cost Basis Total'].iloc[0] if not filtered_posi.empty else 0.0
 
     cash_flows.append((latest_date, current_val))
     return EntityCashFlows(
@@ -64,6 +66,59 @@ def build_entity_cash_flows(data, account_num, entity_name):
         current_basis=current_basis,
         latest_date=latest_date
     )
+
+def filter_asset_class_transactions(transactions_df, account_num, asset_class):
+    df = transactions_df.copy()
+    df = df[
+        (df['Account Number'] == account_num) &
+        (df['Asset Type'] == asset_class)
+    ]
+    return df
+
+
+def filter_asset_class_positions(positions_df, account_num, asset_class):
+    df = positions_df.copy()
+    df = df[
+        (df['Account Number'] == account_num) &
+        (df['Asset Type'] == asset_class)
+    ]
+    return df
+
+def build_asset_class_cash_flows(data, account_num, asset_class):
+    transactions_df = data.transactions
+    positions_df = data.positions
+    latest_date = data.latest_date
+    
+    filtered_hist = filter_asset_class_transactions(transactions_df, account_num, asset_class)
+    filtered_posi = filter_asset_class_positions(positions_df, account_num, asset_class)
+
+    cash_flows, total_invested = build_cash_flow(filtered_hist)
+    current_val = filtered_posi['Current Value'].sum()
+    current_basis = filtered_posi['Cost Basis Total'].sum()
+    
+    cash_flows.append((latest_date, current_val))
+    return EntityCashFlows(
+        cash_flows=cash_flows, 
+        total_invested=total_invested, 
+        current_value=current_val,
+        current_basis=current_basis,
+        latest_date=latest_date
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -163,3 +218,5 @@ if __name__ == "__main__":
     entity_cash_flows = build_account_cash_flows(data, account)
     print(f"Total invested of {account}: {entity_cash_flows.total_invested}")
     print(f"Current value of {account}: {entity_cash_flows.current_value}")
+
+
