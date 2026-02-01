@@ -23,6 +23,24 @@ def calculate_metrics(entity_cash_flows):
         'Holding Period (Y)': weighted_average_holding_period
     }
 
+
+
+def calculate_account_metrics(entity_cash_flows):
+    cash_flows = entity_cash_flows.cash_flows
+    total_invested = entity_cash_flows.total_invested
+
+    total_pnl = get_total_pnl(cash_flows)
+    roi = total_pnl / total_invested if total_invested != 0 else 0
+    irr_val = xirr(cash_flows)
+    weighted_average_holding_period = get_weighted_average_holding_period(entity_cash_flows)
+    
+    return {
+        'IRR': irr_val,
+        'ROI': roi,
+        'Total PnL': total_pnl,
+        'Holding Period (Y)': weighted_average_holding_period
+    }
+
 def get_total_pnl(cash_flows):
     total_pnl = sum(amount for date, amount in cash_flows)
     return total_pnl

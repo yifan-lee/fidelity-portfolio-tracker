@@ -25,10 +25,10 @@ def main():
     account_res = analyzer.analyze_account_performance()
     
     # 3. Asset Type Performance
-    asset_type_res = analyzer.analyze_asset_type_performance()
+    asset_type_res = analyzer.analyze_account_by_asset_class('Z23390746')
 
     # 4. Individual Holdings
-    holdings_res = analyzer.analyze_individual_holdings()
+    holdings_res = analyzer.analyze_all_entities_in_account('Z23390746')
 
     # Generate Report
     output_dir = project_path / 'output'

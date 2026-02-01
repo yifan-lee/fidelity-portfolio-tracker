@@ -148,6 +148,15 @@ def clean_transactions(transactions_df):
     # invert the sign of the amount for account 86964 (401k)   
     transactions_df.loc[transactions_df['Account Number'] == "86964", 'Amount ($)'] *= -1
 
+    # invert the sign of the amount for Electronic Funds Transfer Received (Cash)
+    transactions_df.loc[transactions_df['Action'] == "Electronic Funds Transfer Received (Cash)", 'Amount ($)'] *= -1
+
+    # invert the sign of the amount for PARTIC CONTR CURRENT PARTICIPANT CUR YR (Cash)
+    transactions_df.loc[transactions_df['Action'] == "PARTIC CONTR CURRENT PARTICIPANT CUR YR (Cash)", 'Amount ($)'] *= -1
+
+    # invert the sign of the amount for JOURNALED
+    transactions_df.loc[transactions_df['Action'] == "JOURNALED (Cash)", 'Amount ($)'] *= -1
+
     # 使用 fillna 确保不匹配的行不会被覆盖为 NaN
     transactions_df.loc[:, 'Symbol'] = transactions_df['Description'].map(symbol_map).fillna(transactions_df.get('Symbol', pd.NA))
     

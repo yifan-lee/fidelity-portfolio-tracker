@@ -105,28 +105,12 @@ def build_asset_class_cash_flows(data, account_num, asset_class):
         latest_date=latest_date
     )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def filter_account_transactions(transactions_df, account_num):
     df = transactions_df.copy()
     funding_patterns = [
         'ELECTRONIC FUNDS TRANSFER', 'CHECK RECEIVED', 'DEPOSIT', 'WIRE', 
-        'BILL PAY', 'CONTRIB', 'PARTIC CONTR'
+        'BILL PAY', 'CONTRIB', 'PARTIC CONTR',
+        'JOURNALED'
     ]
     mask_account = (df['Account Number'] == account_num)
     mask_pattern = df['Action'].str.upper().apply(lambda x: any(p in str(x) for p in funding_patterns))
@@ -134,7 +118,12 @@ def filter_account_transactions(transactions_df, account_num):
     df = df[mask_account & mask_pattern]
     return df
 
-
+# def filter_account_transactions(transactions_df, account_num):
+#     df = transactions_df.copy()
+#     df = df[
+#         (df['Account Number'] == account_num)
+#     ]
+#     return df
 
 def filter_account_positions(positions_df, account_num):
     df = positions_df.copy()
@@ -142,48 +131,93 @@ def filter_account_positions(positions_df, account_num):
     return df
 
 
-    
-    
 def build_account_cash_flows(data, account_num):
     transactions_df = data.transactions
     positions_df = data.positions
     latest_date = data.latest_date
     
-    if account_num == 'Z06872898':
-        cash_flows = []
-        filtered_posi = filter_account_positions(positions_df, account_num)
-        initial_date = pd.to_datetime('2022-07-26')
-        current_val = filtered_posi['Current Value'].iloc[0]
-        cash_flows.append((initial_date, -100))
-        cash_flows.append((latest_date, current_val))
-        return EntityCashFlows(
-            cash_flows=cash_flows, 
-            total_invested=100, 
-            current_value=current_val,
-            latest_date=latest_date
-        )
     filtered_hist = filter_account_transactions(transactions_df, account_num)
     filtered_posi = filter_account_positions(positions_df, account_num)
 
     cash_flows = []
     total_invested = 0.0
     current_val = filtered_posi['Current Value'].sum()
+    current_basis = filtered_posi['Cost Basis Total'].sum()
     for _, row in filtered_hist.iterrows():
         date = row['Run Date']
         amount = row['Amount ($)']
-        flow = -amount
+        flow = amount
         cash_flows.append((date, flow))
-        
-        # Track Invested Capital (Sum of negative flows)
-        total_invested -= (flow)
+    if account_num == 'Z06872898':
+        total_invested = 100.0
+    else:
+        total_invested = -sum([flow for _, flow in cash_flows])
 
     cash_flows.append((latest_date, current_val))
     return EntityCashFlows(
         cash_flows=cash_flows, 
         total_invested=total_invested, 
         current_value=current_val,
+        current_basis=current_basis,
         latest_date=latest_date
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+# def build_account_cash_flows(data, account_num):
+#     transactions_df = data.transactions
+#     positions_df = data.positions
+#     latest_date = data.latest_date
+    
+#     if account_num == 'Z06872898':
+#         cash_flows = []
+#         filtered_posi = filter_account_positions(positions_df, account_num)
+#         initial_date = pd.to_datetime('2022-07-26')
+#         current_val = filtered_posi['Current Value'].iloc[0]
+#         cash_flows.append((initial_date, -100))
+#         cash_flows.append((latest_date, current_val))
+#         return EntityCashFlows(
+#             cash_flows=cash_flows, 
+#             total_invested=100, 
+#             current_value=current_val,
+#             latest_date=latest_date
+#         )
+#     filtered_hist = filter_account_transactions(transactions_df, account_num)
+#     filtered_posi = filter_account_positions(positions_df, account_num)
+
+#     cash_flows = []
+#     total_invested = 0.0
+#     current_val = filtered_posi['Current Value'].sum()
+#     for _, row in filtered_hist.iterrows():
+#         date = row['Run Date']
+#         amount = row['Amount ($)']
+#         flow = -amount
+#         cash_flows.append((date, flow))
+        
+#         # Track Invested Capital (Sum of negative flows)
+#         total_invested -= (flow)
+
+#     cash_flows.append((latest_date, current_val))
+#     return EntityCashFlows(
+#         cash_flows=cash_flows, 
+#         total_invested=total_invested, 
+#         current_value=current_val,
+#         latest_date=latest_date
+#     )
     
 
 if __name__ == "__main__":
