@@ -210,3 +210,16 @@ class PortfolioAnalyzer:
             'Holding Period (Y)': f"{metrics['Holding Period (Y)']:.2f}"
         })
         return result
+
+    def analyze_all_entities_in_account(
+        self,
+        account_num: str
+    ):
+        pass
+
+    def analyze_account_by_asset_class(
+        self,
+        account_num: str
+    ):
+        pass
+        

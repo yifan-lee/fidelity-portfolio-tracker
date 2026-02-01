@@ -29,12 +29,10 @@ def load_data(data_dir):
     pos_file, pos_date = get_latest_position_file(data_dir)
     print(f"Loading positions from: {pos_file} (Date: {pos_date.strftime('%Y-%m-%d')})")
     positions_df = pd.read_csv(pos_file, index_col=False)
-
     positions_df = clean_positions(positions_df)
 
     # 2. Load History
     transactions_df = load_transactions(data_dir)
-    
     transactions_df = clean_transactions(transactions_df)
     
     return PortfolioData(positions_df, transactions_df, pos_date)
@@ -130,6 +128,16 @@ def clean_transactions(transactions_df):
         if col in transactions_df.columns:
             transactions_df[col] = transactions_df[col].apply(clean_currency)
     transactions_df['Asset Type'] = transactions_df.apply(categorize_asset, axis=1) 
+
+    # Fill symbol
+    conditions = [
+        transactions_df['Description'] == "FID BLUE CHIP GR K6",
+        transactions_df['Description'] == "SP 500 INDEX PL CL E",
+        transactions_df['Description'] == "SP 500 INDEX PL CL F"
+    ]
+    choices = ["FBCGX", "84679P173", "84679P173"]
+    transactions_df['Symbol'] = np.select(conditions, choices, default=transactions_df.get('Symbol', None))
+    
     # Sort by date
     transactions_df = transactions_df.sort_values('Run Date')
     return transactions_df
