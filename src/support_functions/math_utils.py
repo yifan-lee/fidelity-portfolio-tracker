@@ -10,22 +10,29 @@ from scipy import optimize
 def calculate_metrics(entity_cash_flows):
     cash_flows = entity_cash_flows.cash_flows
     total_invested = entity_cash_flows.total_invested
-    current_value = entity_cash_flows.current_value
-    latest_date = entity_cash_flows.latest_date
 
+    total_pnl = get_total_pnl(cash_flows)
+    roi = total_pnl / total_invested if total_invested != 0 else 0
     irr_val = xirr(cash_flows)
-    total_return_dollar = current_value - total_invested
-    roi = total_return_dollar / total_invested if total_invested != 0 else 0
-    weighted_average_holding_period = get_weighted_average_holding_period(cash_flows, latest_date)
+    weighted_average_holding_period = get_weighted_average_holding_period(entity_cash_flows)
     
     return {
         'IRR': irr_val,
-        'Total Return ($)': total_return_dollar,
         'ROI': roi,
+        'Total PnL': total_pnl,
         'Holding Period (Y)': weighted_average_holding_period
     }
 
-def get_weighted_average_holding_period(cash_flows, latest_date):
+def get_total_pnl(cash_flows):
+    total_pnl = sum(amount for date, amount in cash_flows)
+    return total_pnl
+
+def get_weighted_average_holding_period(entity_cash_flows):
+    cash_flows = entity_cash_flows.cash_flows
+    current_basis = entity_cash_flows.current_basis
+    latest_date = entity_cash_flows.latest_date
+    if current_basis == 0:
+        return 0
     invested_cash_flows = [flow for flow in cash_flows if flow[1] < 0]
     dates, amounts = zip(*invested_cash_flows)
     amounts = pd.Series(amounts)

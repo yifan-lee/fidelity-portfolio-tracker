@@ -12,17 +12,62 @@ class EntityCashFlows:
     cash_flows: List[Tuple[datetime.datetime, float]] = field(default_factory=list)
     total_invested: float = 0
     current_value: float = 0
+    current_basis: float = 0
     latest_date: datetime.datetime = None
 
 
-def filter_stock_transactions(transactions_df, account_num, symbol):
+def filter_entity_transactions(transactions_df, account_num, entity_name):
     df = transactions_df.copy()
     df = df[
         (df['Account Number'] == account_num) &
-        (df['Symbol'] == symbol)
+        (df['Symbol'] == entity_name)
+    ]
+    return df
+
+
+def filter_entity_positions(positions_df, account_num, entity_name):
+    df = positions_df.copy()
+    df = df[
+        (df['Account Number'] == account_num) &
+        (df['Symbol'] == entity_name)
     ]
     return df
     
+
+
+def build_entity_cash_flows(data, account_num, entity_name):
+    transactions_df = data.transactions
+    positions_df = data.positions
+    latest_date = data.latest_date
+    
+    filtered_hist = filter_entity_transactions(transactions_df, account_num, entity_name)
+    filtered_posi = filter_entity_positions(positions_df, account_num, entity_name)
+
+    cash_flows = []
+    total_invested = 0.0
+    current_val = filtered_posi['Current Value'].iloc[0] if not filtered_posi.empty else 0.0
+    current_basis = filtered_posi['Cost Basis Total'].iloc[0] if not filtered_posi.empty else 0.0
+    for _, row in filtered_hist.iterrows():
+        date = row['Run Date']
+        amount = row['Amount ($)']
+        flow = amount
+        cash_flows.append((date, flow))
+        
+        if flow < 0:
+            total_invested += abs(flow)
+
+
+    cash_flows.append((latest_date, current_val))
+    return EntityCashFlows(
+        cash_flows=cash_flows, 
+        total_invested=total_invested, 
+        current_value=current_val,
+        current_basis=current_basis,
+        latest_date=latest_date
+    )
+
+
+
 def filter_account_transactions(transactions_df, account_num):
     df = transactions_df.copy()
     funding_patterns = [
@@ -35,13 +80,7 @@ def filter_account_transactions(transactions_df, account_num):
     df = df[mask_account & mask_pattern]
     return df
 
-def filter_stock_positions(positions_df, account_num, symbol):
-    df = positions_df.copy()
-    df = df[
-        (df['Account Number'] == account_num) &
-        (df['Symbol'] == symbol)
-    ]
-    return df
+
 
 def filter_account_positions(positions_df, account_num):
     df = positions_df.copy()
@@ -49,34 +88,6 @@ def filter_account_positions(positions_df, account_num):
     return df
 
 
-def build_stock_cash_flows(data, account_num, symbol):
-    transactions_df = data.transactions
-    positions_df = data.positions
-    latest_date = data.latest_date
-    
-    filtered_hist = filter_stock_transactions(transactions_df, account_num, symbol)
-    filtered_posi = filter_stock_positions(positions_df, account_num, symbol)
-
-    cash_flows = []
-    total_invested = 0.0
-    current_val = filtered_posi['Current Value'].iloc[0]
-    for _, row in filtered_hist.iterrows():
-        date = row['Run Date']
-        amount = row['Amount ($)']
-        flow = amount
-        cash_flows.append((date, flow))
-        
-        # Track Invested Capital (Sum of negative flows)
-        if flow < 0:
-            total_invested += abs(flow)
-
-    cash_flows.append((latest_date, current_val))
-    return EntityCashFlows(
-        cash_flows=cash_flows, 
-        total_invested=total_invested, 
-        current_value=current_val,
-        latest_date=latest_date
-    )
     
     
 def build_account_cash_flows(data, account_num):
