@@ -1,7 +1,7 @@
 import pandas as pd
 from support_functions.data_loader import load_data
 from support_functions.flow_builders import (
-    build_stock_cash_flows, build_account_cash_flows, EntityCashFlows
+    build_entity_cash_flows, EntityCashFlows
 )
 from support_functions.math_utils import calculate_metrics
 
@@ -197,9 +197,11 @@ class PortfolioAnalyzer:
     ):
         entity_cash_flows = build_entity_cash_flows(self.data, account_num, entity_name)
         metrics = calculate_metrics(entity_cash_flows)
+        account_name = self.data.account_map.get(account_num, "Unknown")
 
         result = pd.Series({
             'Account Number': account_num,
+            'Account Name': account_name,
             'Entity Name': entity_name,
             'Total Invested': entity_cash_flows.total_invested,
             'Current Basis': entity_cash_flows.current_basis,

@@ -56,7 +56,6 @@ def build_entity_cash_flows(data, account_num, entity_name):
         if flow < 0:
             total_invested += abs(flow)
 
-
     cash_flows.append((latest_date, current_val))
     return EntityCashFlows(
         cash_flows=cash_flows, 

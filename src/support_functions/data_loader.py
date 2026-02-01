@@ -3,6 +3,7 @@ import glob
 import os
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from dataclasses import dataclass, field
 
 @dataclass
@@ -11,6 +12,7 @@ class PortfolioData:
     transactions: pd.DataFrame
     latest_date: pd.Timestamp
     unique_accounts: pd.DataFrame = field(init=False)
+    account_map: dict = field(init=False)
 
     def __post_init__(self):
         if self.positions is not None:
@@ -18,6 +20,10 @@ class PortfolioData:
                 self.positions[['Account Number', 'Account Name']]
                 .drop_duplicates()
                 .reset_index(drop=True)
+            )
+            self.account_map = (
+                self.unique_accounts.set_index('Account Number')['Account Name']
+                .to_dict()
             )
 
 def load_data(data_dir):
@@ -129,14 +135,21 @@ def clean_transactions(transactions_df):
             transactions_df[col] = transactions_df[col].apply(clean_currency)
     transactions_df['Asset Type'] = transactions_df.apply(categorize_asset, axis=1) 
 
+    # Filter out Exchange transactions
+    transactions_df = transactions_df[~transactions_df['Action'].str.contains('Exchange', na=False)]
+    
     # Fill symbol
-    conditions = [
-        transactions_df['Description'] == "FID BLUE CHIP GR K6",
-        transactions_df['Description'] == "SP 500 INDEX PL CL E",
-        transactions_df['Description'] == "SP 500 INDEX PL CL F"
-    ]
-    choices = ["FBCGX", "84679P173", "84679P173"]
-    transactions_df['Symbol'] = np.select(conditions, choices, default=transactions_df.get('Symbol', None))
+    symbol_map = {
+        "FID BLUE CHIP GR K6": "FBCGX",
+        "SP 500 INDEX PL CL E": "84679P173",
+        "SP 500 INDEX PL CL F": "84679P173"
+    }
+
+    # invert the sign of the amount for account 86964 (401k)   
+    transactions_df.loc[transactions_df['Account Number'] == "86964", 'Amount ($)'] *= -1
+
+    # 使用 fillna 确保不匹配的行不会被覆盖为 NaN
+    transactions_df['Symbol'] = transactions_df['Description'].map(symbol_map).fillna(transactions_df.get('Symbol', None))
     
     # Sort by date
     transactions_df = transactions_df.sort_values('Run Date')
